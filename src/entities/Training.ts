@@ -6,17 +6,19 @@ import
     ManyToOne
 }
     from 'typeorm'
-import {TrainingStatusEnum} from "../enums/enums";
+import {TrainingStatusEnum, TrainingTypeEnum} from "../enums/enums";
 import User from "./User";
 import BaseClass from "./BaseClass";
+import {IsInt, MaxLength} from "class-validator";
 
 
 @Entity('training')
 class Training extends BaseClass {
-    @PrimaryGeneratedColumn('uuid')
+    @PrimaryGeneratedColumn('increment')
     id: string
 
     @Column()
+    @MaxLength(100)
     trainingName: string
 
     @Column({
@@ -37,6 +39,31 @@ class Training extends BaseClass {
         nullable: true
     })
     operatedAt: Date
+
+    @Column({
+        nullable: true,
+    })
+    note: string
+
+    @Column()
+    trainingType: TrainingTypeEnum
+
+    @Column()
+    startDate: Date
+
+    @Column()
+    endDate: Date
+
+    @Column()
+    @IsInt()
+    hoursCount: number
+
+    @Column({
+        nullable: true,
+    })
+    @MaxLength(100)
+    trainingURL: string
+
 }
 
 export default Training

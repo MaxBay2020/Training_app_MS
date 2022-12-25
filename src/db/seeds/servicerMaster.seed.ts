@@ -8,8 +8,8 @@ class ServicerMasterSeeder implements Seeder {
         const repo = dataSource.getRepository(ServicerMaster)
 
         const servicerMaster = ServicerMaster.create({
-            // id: '00001',
-            id: '00002',
+            id: '00001',
+            // id: '00002',
             servicerMasterName: 'Acme Mortgage'
         })
 

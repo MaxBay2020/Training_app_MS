@@ -18,33 +18,33 @@ class UserSeeder implements Seeder {
         const servicerMaster: ServicerMaster = await ServicerMaster.findOneBy({}) as ServicerMaster
 
         await repo.insert([
-            // {
-            //     email: 'max@gmail.com',
-            //     firstName: "Max",
-            //     lastName: "Wong",
-            //     servicer: servicerMaster,
-            //     userRole: UserRoleEnum.SERVICER
-            // },
-            // {
-            //     email: "lucy@lucy.com",
-            //     firstName: "Lucy",
-            //     lastName: "Chen",
-            //     userRole: UserRoleEnum.ADMIN
-            // },
-
             {
-                email: 'max@hotmail.com',
+                email: 'max@gmail.com',
                 firstName: "Max",
                 lastName: "Wong",
                 servicer: servicerMaster,
                 userRole: UserRoleEnum.SERVICER
             },
             {
-                email: "lucy@hotmail.com",
+                email: "lucy@lucy.com",
                 firstName: "Lucy",
                 lastName: "Chen",
                 userRole: UserRoleEnum.ADMIN
             },
+
+            // {
+            //     email: 'max@hotmail.com',
+            //     firstName: "Max",
+            //     lastName: "Wong",
+            //     servicer: servicerMaster,
+            //     userRole: UserRoleEnum.SERVICER
+            // },
+            // {
+            //     email: "lucy@hotmail.com",
+            //     firstName: "Lucy",
+            //     lastName: "Chen",
+            //     userRole: UserRoleEnum.ADMIN
+            // },
         ])
     }
 }

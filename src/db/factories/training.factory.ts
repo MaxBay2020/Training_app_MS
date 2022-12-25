@@ -1,7 +1,7 @@
 import {setSeederFactory} from 'typeorm-extension'
 import Training from "../../entities/Training";
 import User from "../../entities/User";
-import {UserRoleEnum} from "../../enums/enums";
+import {TrainingTypeEnum, UserRoleEnum} from "../../enums/enums";
 
 // 使用setSeederFactory(第一个参数， 第二个参数)方法来定义工厂流水线
 // 第一个参数：指定要生产那个entity
@@ -14,7 +14,12 @@ export default setSeederFactory(Training, async faker => {
 
     const training = Training.create({
         trainingName: faker.company.name(),
-        user
+        user,
+        trainingType: TrainingTypeEnum.LiveTraining,
+        startDate: new Date(Date.now()),
+        endDate: new Date(Date.now()),
+        hoursCount: 10,
+        trainingURL: 'hello world'
     })
 
     return training
