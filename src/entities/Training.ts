@@ -22,6 +22,8 @@ class Training extends BaseClass {
     trainingName: string
 
     @Column({
+        type: 'enum',
+        enum: TrainingStatusEnum,
         nullable: true,
         default: TrainingStatusEnum.PENDING
     })
@@ -45,7 +47,10 @@ class Training extends BaseClass {
     })
     note: string
 
-    @Column()
+    @Column({
+        type: 'enum',
+        enum: TrainingTypeEnum
+    })
     trainingType: TrainingTypeEnum
 
     @Column()

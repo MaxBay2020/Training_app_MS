@@ -23,7 +23,67 @@ class TrainingController {
             return res.status(200).send(trainingList)
         }catch(e){
             console.log(e.message)
-            return
+            const error = new Error<{}>(e, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
+        }
+    }
+
+    /**
+     * get training by trainingId
+     * @param req
+     * @param res
+     */
+    static queryTrainingById = async (req: ExpReq, res: ExpRes) => {
+        const { email } = req.body
+        const { trainingId } = req.params
+
+        if(!email || !trainingId){
+            const error = new Error(null, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: '',
+                message: error.message
+            })
+        }
+
+        // query training by trainingId from db
+        try {
+            const user: User =  await dataSource.getRepository(User)
+                .createQueryBuilder('user')
+                .where('user.email = :email', { email })
+                .getOne() as User
+
+            if(!user){
+                const error = new Error(null, StatusCode.E404, Message.ErrFind)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
+            const training: Training =  await dataSource.getRepository(Training)
+                .createQueryBuilder('training')
+                .where('training.id = :trainingId', { trainingId })
+                .getOne() as Training
+
+            if(!training){
+                const error = new Error(null, StatusCode.E404, Message.ErrFind)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
+            return res.status(200).send(training)
+        }catch(e){
+            console.log(e.message)
+            const error = new Error<{}>(e, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
         }
     }
 
@@ -91,6 +151,154 @@ class TrainingController {
                 message: error.message
             })
         }
+    }
+
+    /**
+     * update training
+     * @param req
+     * @param res
+     */
+    static updateTrainingById = async (req: ExpReq, res: ExpRes) => {
+        const { email, ...rest } = req.body
+        const { trainingId } = req.params
+
+        if(!email || !trainingId){
+            const error = new Error(null, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: '',
+                message: error.message
+            })
+        }
+
+        const updatedTraining = Training.create({...rest})
+        const errors = await validate(updatedTraining, {
+            skipMissingProperties: true
+        })
+        if(errors.length > 0){
+            console.log(errors)
+            const error = new Error(null, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: '',
+                message: error.message
+            })
+        }
+
+        try{
+            const user: User =  await dataSource.getRepository(User)
+                .createQueryBuilder('user')
+                .where('user.email = :email', { email })
+                .getOne() as User
+
+            if(!user){
+                const error = new Error(null, StatusCode.E404, Message.ErrFind)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
+            const training: Training =  await dataSource.getRepository(Training)
+                .createQueryBuilder('training')
+                .where('training.id = :trainingId', { trainingId })
+                .getOne() as Training
+
+            if(!training){
+                const error = new Error(null, StatusCode.E404, Message.ErrFind)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
+            await dataSource
+                .createQueryBuilder()
+                .update(Training)
+                .set({...rest})
+                .where('id = :trainingId', {trainingId})
+                .execute()
+
+            return res.status(StatusCode.E200).send({
+                info: '',
+                message: Message.OK
+            })
+
+        }catch (e) {
+            console.log(e.message)
+            const error = new Error<{}>(e, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
+        }
+    }
+
+    /**
+     * delete training by trainingId
+     * @param req
+     * @param res
+     */
+    static deleteTrainingById = async (req: ExpReq, res: ExpRes) => {
+        const { email } = req.body
+        const { trainingId } = req.params
+
+        if(!email || !trainingId){
+            const error = new Error(null, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: '',
+                message: error.message
+            })
+        }
+
+        try {
+            const user: User =  await dataSource.getRepository(User)
+                .createQueryBuilder('user')
+                .where('user.email = :email', { email })
+                .getOne() as User
+
+            if(!user){
+                const error = new Error(null, StatusCode.E404, Message.ErrFind)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
+            const training: Training =  await dataSource.getRepository(Training)
+                .createQueryBuilder('training')
+                .where('training.id = :trainingId', { trainingId })
+                .getOne() as Training
+
+            if(!training){
+                const error = new Error(null, StatusCode.E404, Message.ErrFind)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
+            await dataSource
+                .createQueryBuilder()
+                .update(Training)
+                .set({
+                    isDelete: true
+                })
+                .where('id = :trainingId', {trainingId})
+                .execute()
+
+            return res.status(StatusCode.E200).send({
+                info: '',
+                message: Message.OK
+            })
+
+        }catch (e) {
+            console.log(e.message)
+            const error = new Error<{}>(e, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
+        }
+
     }
 }
 
