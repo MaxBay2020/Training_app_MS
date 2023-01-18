@@ -10,8 +10,8 @@ class TrainingSeed implements Seeder {
         // 因此就不用像user.seed.ts文件中那样手动创建数据了
         // 而是借助factory文件创建很多假数据
         const trainingFactory = await factoryManager.get(Training)
-        // 创建100个product
-        await trainingFactory.saveMany(2)
+        // 创建10个product
+        await trainingFactory.saveMany(10)
     }
 }
 

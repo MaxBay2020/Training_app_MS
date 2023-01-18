@@ -2,6 +2,7 @@ import express, {Express} from 'express'
 import bodyParser from 'body-parser'
 import trainingRouters from "./routes/trainingRoutes";
 import AppDataSource from "./data-source";
+import cors from "cors";
 
 const startServer = async () => {
     const app: Express = express()
@@ -18,6 +19,8 @@ const startServer = async () => {
     // parse application/json
     app.use(bodyParser.json())
 
+    app.use(cors())
+
 
     app.use('/training', trainingRouters)
 
@@ -25,7 +28,7 @@ const startServer = async () => {
     // error handler
     app.use('*', (req, res) => {
         return res.status(404).json({
-            message: 'NO MATCHED ROUTER🧐'
+            message: 'NO MATCHED ROUTER'
         })
     })
 

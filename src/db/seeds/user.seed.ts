@@ -1,8 +1,9 @@
-import { Seeder, SeederFactoryManager } from 'typeorm-extension'
-import { DataSource } from 'typeorm'
+import {Seeder, SeederFactoryManager} from 'typeorm-extension'
+import {DataSource} from 'typeorm'
 import User from "../../entities/User";
 import {UserRoleEnum} from "../../enums/enums";
 import ServicerMaster from "../../entities/ServicerMaster";
+import UserRole from "../../entities/UserRole";
 
 // 创建UserSeeder类，必须实现Seeder接口
 class UserSeeder implements Seeder {
@@ -16,34 +17,38 @@ class UserSeeder implements Seeder {
         // 我们采用手动创建的方式来创建少量的数据
         // 插入两个user，一个是admin，另一个是普通用户
         const servicerMaster: ServicerMaster = await ServicerMaster.findOneBy({}) as ServicerMaster
+        const userRoleServicer: UserRole = await UserRole.findOneBy({userRoleName: UserRoleEnum.SERVICER}) as UserRole
+        const userRoleAdmin: UserRole = await UserRole.findOneBy({userRoleName: UserRoleEnum.ADMIN}) as UserRole
+        const userRoleApprover: UserRole = await UserRole.findOneBy({userRoleName: UserRoleEnum.APPROVER}) as UserRole
 
         await repo.insert([
-            // {
-            //     email: 'max@gmail.com',
-            //     firstName: "Max",
-            //     lastName: "Wong",
-            //     servicer: servicerMaster,
-            //     userRole: UserRoleEnum.SERVICER
-            // },
-            // {
-            //     email: "lucy@lucy.com",
-            //     firstName: "Lucy",
-            //     lastName: "Chen",
-            //     userRole: UserRoleEnum.ADMIN
-            // },
+            {
+                email: 'adam.smith@acme.com',
+                firstName: "Adam",
+                lastName: "Smith",
+                servicer: servicerMaster,
+                userRole: userRoleServicer
+            },
+            {
+                email: "jane.doe@acme.com",
+                firstName: "Jane",
+                lastName: "Doe",
+                servicer: servicerMaster,
+                userRole: userRoleServicer
+            },
 
             {
                 email: 'max@hotmail.com',
                 firstName: "Max",
                 lastName: "Wong",
                 servicer: servicerMaster,
-                userRole: UserRoleEnum.SERVICER
+                userRole: userRoleAdmin
             },
             {
                 email: "lucy@hotmail.com",
                 firstName: "Lucy",
                 lastName: "Chen",
-                userRole: UserRoleEnum.ADMIN
+                userRole: userRoleApprover
             },
         ])
     }

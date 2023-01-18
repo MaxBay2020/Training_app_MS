@@ -11,3 +11,11 @@ export enum UserRoleEnum {
     APPROVER = 'APPROVER',
     SERVICER = 'SERVICER'
 }
+
+export enum TrainingTypeEnum {
+    LiveTraining = 'LiveTraining',
+    ECLASS = 'ECLASS',
+    Webinar = 'Webinar'
+}
+
+

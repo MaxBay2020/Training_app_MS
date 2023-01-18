@@ -5,7 +5,7 @@ import
     Column,
     CreateDateColumn,
     UpdateDateColumn,
-    ManyToOne, PrimaryColumn, OneToMany
+    ManyToOne, PrimaryColumn, OneToMany, PrimaryGeneratedColumn
 }
     from 'typeorm'
 import {UserRoleEnum} from "../enums/enums";
@@ -13,11 +13,17 @@ import ServicerMaster from "./ServicerMaster";
 import Training from "./Training";
 import BaseClass from "./BaseClass";
 import {IsEmail} from "class-validator";
+import UserRole from "./UserRole";
 
 
 @Entity('user')
 class User extends BaseClass {
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn('uuid')
+    id: string
+
+    @Column({
+        unique: true
+    })
     @IsEmail()
     email: string
 
@@ -27,11 +33,8 @@ class User extends BaseClass {
     @Column()
     lastName: string
 
-    @Column({
-        nullable: true,
-        default: UserRoleEnum.SERVICER
-    })
-    userRole: UserRoleEnum
+    @ManyToOne(() => UserRole, userRole => userRole.users)
+    userRole: UserRole
 
     @ManyToOne(()=>ServicerMaster,
             servicerMaster => servicerMaster.users,
