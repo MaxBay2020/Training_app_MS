@@ -1,7 +1,7 @@
 export enum StatusCode {
     E200 = 200, // OK
     E400 = 400, // bad request due to client error
-    // E401 = 401, // verify code expired or not correct
+    E401 = 401, // authorization error
     // E402 = 402, // necessary params NOT provided
     E404 = 404, // resources NOT found
     E500 = 500  // there is something wrong with server, please try again later
@@ -13,6 +13,7 @@ export enum Message {
     ErrCreate = 'Cannot create record in the database',
     ErrParams = 'Necessary params NOT provided',
     ErrToken = 'Token is NOT valid',
+    AuthorizationError = 'You do NOT have authorization',
     NoAuth = 'Your are not authenticated',
     EmailError = 'Cannot send email, please try again later',
     UserExist = 'Email has already been registered',
