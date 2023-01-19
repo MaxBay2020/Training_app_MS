@@ -5,6 +5,8 @@ import dataSource from "../data-source";
 import User from "../entities/User";
 import Error, {Message, StatusCode} from "../enums/Error";
 import {validate} from "class-validator";
+import Utils from "../utils/Utils";
+import {Repository} from "typeorm";
 
 class TrainingController {
 
@@ -25,21 +27,56 @@ class TrainingController {
      * @param res
      */
     static queryAllTrainings = async (req: ExpReq, res: ExpRes) => {
+
+        const { searchKeyword, sortBy, page, limit } = req.query
+
+        if(!sortBy || !page || !limit){
+            const error = new Error(null, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
+        }
+        const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(+sortBy)
+
+        const startIndex = (+page - 1) * (+limit)
+
         // query all trainings from db
         try {
             const email: string = req.body.email
             const userRole= req.body.userRole
             if(userRole === UserRoleEnum.SERVICER){
-                const trainingList: Training[] = await dataSource
-                    .getRepository(Training)
+
+                const trainingListQueryBuilder = dataSource.getRepository(Training)
                     .createQueryBuilder('training')
                     .innerJoinAndSelect('training.user', 'user' )
                     .where('user.email = :email', { email })
+
+                if(searchKeyword){
+                    trainingListQueryBuilder
+                    // .andWhere(
+                    //     'training.trainingName LIKE :value || training.trainingType LIKE :value || training.trainingStatus LIKE :value',
+                    //     { value: `%${searchKeyword}%` })
+                    .andWhere('training.trainingName LIKE :value', { value: `%${searchKeyword}%` })
+                    // .orWhere('training.trainingType LIKE :value', { value: `%${searchKeyword}%` })
+                    // .orWhere('training.trainingStatus LIKE :value', { value: `%${searchKeyword}%` })
+                }
+
+                trainingListQueryBuilder
+                    .orderBy(`training.${sortByFieldName}`, sortByOrder)
+
+                const totalNumber: number = await trainingListQueryBuilder.getCount() as number
+                const trainingList: Training[] = await trainingListQueryBuilder
+                    .skip(startIndex)
+                    .take(+limit)
                     .getMany() as Training[]
+
+                const totalPage = Math.ceil(totalNumber / +limit)
 
                 return res.status(200).send({
                     userRole,
-                    trainingList: trainingList
+                    trainingList: trainingList,
+                    totalPage
                 })
 
             }
