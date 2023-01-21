@@ -28,6 +28,9 @@ class User extends BaseClass {
     email: string
 
     @Column()
+    password: string
+
+    @Column()
     firstName: string
 
     @Column()

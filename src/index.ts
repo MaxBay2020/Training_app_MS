@@ -3,6 +3,8 @@ import bodyParser from 'body-parser'
 import trainingRouters from "./routes/trainingRoutes";
 import AppDataSource from "./data-source";
 import cors from "cors";
+import authRouters from "./routes/authRoutes"
+import dotenv from 'dotenv'
 
 const startServer = async () => {
     const app: Express = express()
@@ -20,9 +22,11 @@ const startServer = async () => {
     app.use(bodyParser.json())
 
     app.use(cors())
+    dotenv.config()
 
 
     app.use('/training', trainingRouters)
+    app.use('/auth', authRouters)
 
 
     // error handler

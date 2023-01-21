@@ -150,7 +150,7 @@ class TrainingController {
             return res.status(200).send(training)
         }catch(e){
             console.log(e.message)
-            const error = new Error<{}>(e, StatusCode.E400, Message.ErrParams)
+            const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
             return res.status(error.statusCode).send({
                 info: error.info,
                 message: error.message

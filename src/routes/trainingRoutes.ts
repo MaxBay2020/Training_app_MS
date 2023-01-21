@@ -7,13 +7,13 @@ const trainingRouters = express.Router()
 trainingRouters.post('/', validateUser, TrainingController.queryAllTrainings)
 
 // get all training type
-trainingRouters.post('/trainingTypes', TrainingController.queryAllTrainingTypes)
+trainingRouters.post('/trainingTypes', validateUser, TrainingController.queryAllTrainingTypes)
 
 // get training by trainingId
 // trainingRouters.get('/:trainingId', TrainingController.queryTrainingById)
 
 // create a training
-trainingRouters.post('/add', TrainingController.createTraining)
+trainingRouters.post('/add', validateUser, TrainingController.createTraining)
 
 // update a training
 trainingRouters.put('/:trainingId', validateUser, TrainingController.updateTrainingById)
