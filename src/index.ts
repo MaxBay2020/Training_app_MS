@@ -28,7 +28,6 @@ const startServer = async () => {
     app.use('/training', trainingRouters)
     app.use('/auth', authRouters)
 
-
     // error handler
     app.use('*', (req, res) => {
         return res.status(404).json({

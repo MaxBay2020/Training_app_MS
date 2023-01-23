@@ -49,17 +49,13 @@ class TrainingController {
 
                 const trainingListQueryBuilder = dataSource.getRepository(Training)
                     .createQueryBuilder('training')
-                    .innerJoinAndSelect('training.user', 'user' )
-                    .where('user.email = :email', { email })
+                    .innerJoinAndSelect('training.user', 'user', 'user.email = :email', { email } )
 
                 if(searchKeyword){
                     trainingListQueryBuilder
-                    // .andWhere(
-                    //     'training.trainingName LIKE :value || training.trainingType LIKE :value || training.trainingStatus LIKE :value',
-                    //     { value: `%${searchKeyword}%` })
                     .andWhere('training.trainingName LIKE :value', { value: `%${searchKeyword}%` })
-                    // .orWhere('training.trainingType LIKE :value', { value: `%${searchKeyword}%` })
-                    // .orWhere('training.trainingStatus LIKE :value', { value: `%${searchKeyword}%` })
+                    .orWhere('training.trainingType LIKE :value', { value: `%${searchKeyword}%` })
+                    .orWhere('training.trainingStatus LIKE :value', { value: `%${searchKeyword}%` })
                 }
 
                 trainingListQueryBuilder
