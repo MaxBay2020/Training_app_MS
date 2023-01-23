@@ -1,5 +1,5 @@
 import dataSource from '../data-source';
-import {ObjectType} from "typeorm";
+import {EntityTarget, ObjectType, SelectQueryBuilder} from "typeorm";
 
 class Utils {
      static queryAllRecordsInTable<T, Entity>(identifiers: T[], tableName: ObjectType<Entity>, primaryKeyColumnName: string) :Promise<Entity[]> {
@@ -30,6 +30,19 @@ class Utils {
              sortByFieldName: 'createdAt',
              sortByOrder: 'DESC'
          }
+    }
+
+    /**
+     * which columns should be searched for
+     * @param queryBuilder
+     * @param columnNames
+     * @param searchKeyword
+     */
+    static specifyColumnsToSearch = (queryBuilder: SelectQueryBuilder<any>, columnNames: string[], searchKeyword: string) :SelectQueryBuilder<any> => {
+        columnNames.forEach(columnName => {
+            queryBuilder.orWhere(`${columnName} LIKE :value`, { value: `%${searchKeyword}%` })
+        })
+        return queryBuilder
     }
 }
 

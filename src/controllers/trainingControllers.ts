@@ -45,48 +45,96 @@ class TrainingController {
         try {
             const email: string = req.body.email
             const userRole= req.body.userRole
+
+            let trainingListQueryBuilder = dataSource.getRepository(Training)
+                .createQueryBuilder('training')
+
+
             if(userRole === UserRoleEnum.SERVICER){
-
-                const trainingListQueryBuilder = dataSource.getRepository(Training)
-                    .createQueryBuilder('training')
-                    .innerJoinAndSelect('training.user', 'user', 'user.email = :email', { email } )
-
-                if(searchKeyword){
-                    trainingListQueryBuilder
-                    .andWhere('training.trainingName LIKE :value', { value: `%${searchKeyword}%` })
-                    .orWhere('training.trainingType LIKE :value', { value: `%${searchKeyword}%` })
-                    .orWhere('training.trainingStatus LIKE :value', { value: `%${searchKeyword}%` })
-                }
-
                 trainingListQueryBuilder
-                    .orderBy(`training.${sortByFieldName}`, sortByOrder)
+                    .innerJoinAndSelect('training.user', 'user', 'user.email = :email', { email } )
+            }
 
-                const totalNumber: number = await trainingListQueryBuilder.getCount() as number
-                const trainingList: Training[] = await trainingListQueryBuilder
-                    .skip(startIndex)
-                    .take(+limit)
-                    .getMany() as Training[]
+            if(userRole === UserRoleEnum.ADMIN){
+                trainingListQueryBuilder
+                    .innerJoinAndSelect('training.user', 'user')
+                    .innerJoinAndSelect('user.servicer', 'sm')
+            }
 
-                const totalPage = Math.ceil(totalNumber / +limit)
-
-                return res.status(200).send({
-                    userRole,
-                    trainingList: trainingList,
-                    totalPage
-                })
+            if(searchKeyword){
+                if(userRole === UserRoleEnum.SERVICER){
+                    trainingListQueryBuilder = Utils.specifyColumnsToSearch(
+                        trainingListQueryBuilder,
+                        ['training.trainingName', 'training.trainingType', 'training.trainingStatus'],
+                        searchKeyword as string)
+                    // trainingListQueryBuilder
+                    // .orWhere('training.trainingName LIKE :value', { value: `%${searchKeyword}%` })
+                    // .orWhere('training.trainingType LIKE :value', { value: `%${searchKeyword}%` })
+                    // .orWhere('training.trainingStatus LIKE :value', { value: `%${searchKeyword}%` })
+                }else if(userRole === UserRoleEnum.ADMIN){
+                    trainingListQueryBuilder = Utils.specifyColumnsToSearch(
+                        trainingListQueryBuilder,
+                        [
+                            'training.trainingName',
+                            'training.trainingType',
+                            'training.trainingStatus',
+                            'user.firstName',
+                            'user.lastName',
+                            'user.email',
+                            'sm.id',
+                            'sm.servicerMasterName'
+                        ],
+                        searchKeyword as string)
+                }
 
             }
 
-            const trainingList: Training[] = await dataSource
-                .getRepository(Training)
-                .createQueryBuilder('training')
-                .innerJoinAndSelect('training.user', 'user' )
-                .getMany() as Training[]
+            trainingListQueryBuilder
+                .orderBy(`training.${sortByFieldName}`, sortByOrder)
+
+            const totalNumber: number = await trainingListQueryBuilder.getCount() as number
+            const trainingList = await trainingListQueryBuilder
+                .skip(startIndex)
+                .take(+limit)
+                .getMany()
+
+            const totalPage = Math.ceil(totalNumber / +limit)
+
+            // TODO: need to be optimised
+            const formattedTrainingList = userRole === UserRoleEnum.SERVICER
+                ? trainingList.map(item => {
+                    const { trainingName, trainingType, trainingStatus, hoursCount, startDate, endDate, trainingURL } = item
+                    return {
+                        trainingName,
+                        trainingType,
+                        trainingStatus,
+                        hoursCount,
+                        startDate,
+                        endDate,
+                        trainingURL
+                    }
+                })
+                : trainingList.map(item => {
+                    const { user, operatedAt, operatedBy, note, createdAt, updatedAt, isDelete, isActive, ...rest } = item
+                return {
+                    ...rest,
+
+                    userEmail: item.user?.email,
+                    userFirstName: item.user?.firstName,
+                    userLastName: item.user?.lastName,
+
+                    servicerId: item.user?.servicer.id,
+                    servicerName: item.user?.servicer.servicerMasterName,
+                }
+            })
+
 
             return res.status(200).send({
                 userRole,
-                trainingList: trainingList
+                trainingList: formattedTrainingList,
+                totalPage
             })
+
 
         }catch(e){
             console.log(e.message)

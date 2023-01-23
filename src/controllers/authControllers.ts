@@ -55,7 +55,7 @@ class AuthControllers {
             const { firstName } = user
             return res.status(200).send({
                 accessToken: token,
-                firstName
+                firstName,
             })
         }catch (e) {
             console.log(e.message)
