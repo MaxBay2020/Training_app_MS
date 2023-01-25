@@ -6,7 +6,7 @@ import User from "../entities/User";
 import Error, {Message, StatusCode} from "../enums/Error";
 import {validate} from "class-validator";
 import Utils from "../utils/Utils";
-import {Repository} from "typeorm";
+import {In, Repository} from "typeorm";
 
 class TrainingController {
 
@@ -55,7 +55,7 @@ class TrainingController {
                     .innerJoinAndSelect('training.user', 'user', 'user.email = :email', { email } )
             }
 
-            if(userRole === UserRoleEnum.ADMIN){
+            if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
                 trainingListQueryBuilder
                     .innerJoinAndSelect('training.user', 'user')
                     .innerJoinAndSelect('user.servicer', 'sm')
@@ -67,11 +67,7 @@ class TrainingController {
                         trainingListQueryBuilder,
                         ['training.trainingName', 'training.trainingType', 'training.trainingStatus'],
                         searchKeyword as string)
-                    // trainingListQueryBuilder
-                    // .orWhere('training.trainingName LIKE :value', { value: `%${searchKeyword}%` })
-                    // .orWhere('training.trainingType LIKE :value', { value: `%${searchKeyword}%` })
-                    // .orWhere('training.trainingStatus LIKE :value', { value: `%${searchKeyword}%` })
-                }else if(userRole === UserRoleEnum.ADMIN){
+                }else if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
                     trainingListQueryBuilder = Utils.specifyColumnsToSearch(
                         trainingListQueryBuilder,
                         [
@@ -86,52 +82,27 @@ class TrainingController {
                         ],
                         searchKeyword as string)
                 }
-
             }
+
+
 
             trainingListQueryBuilder
                 .orderBy(`training.${sortByFieldName}`, sortByOrder)
 
             const totalNumber: number = await trainingListQueryBuilder.getCount() as number
-            const trainingList = await trainingListQueryBuilder
+            const trainingList: Training[] = await trainingListQueryBuilder
                 .skip(startIndex)
                 .take(+limit)
-                .getMany()
+                .getMany() as Training[]
+
+
 
             const totalPage = Math.ceil(totalNumber / +limit)
 
-            // TODO: need to be optimised
-            const formattedTrainingList = userRole === UserRoleEnum.SERVICER
-                ? trainingList.map(item => {
-                    const { trainingName, trainingType, trainingStatus, hoursCount, startDate, endDate, trainingURL } = item
-                    return {
-                        trainingName,
-                        trainingType,
-                        trainingStatus,
-                        hoursCount,
-                        startDate,
-                        endDate,
-                        trainingURL
-                    }
-                })
-                : trainingList.map(item => {
-                    const { user, operatedAt, operatedBy, note, createdAt, updatedAt, isDelete, isActive, ...rest } = item
-                return {
-                    ...rest,
-
-                    userEmail: item.user?.email,
-                    userFirstName: item.user?.firstName,
-                    userLastName: item.user?.lastName,
-
-                    servicerId: item.user?.servicer.id,
-                    servicerName: item.user?.servicer.servicerMasterName,
-                }
-            })
-
-
             return res.status(200).send({
                 userRole,
-                trainingList: formattedTrainingList,
+                // TODO: need to be optimised
+                trainingList: Utils.formattedTrainingList(trainingList, userRole),
                 totalPage
             })
 
@@ -218,7 +189,7 @@ class TrainingController {
             trainingURL
         } = req.body
 
-        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount){
+        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
                 info: error.info,
@@ -427,6 +398,55 @@ class TrainingController {
                 message: error.message
             })
         }
+    }
+
+    static updateTrainingStatusByIds = async (req: ExpReq, res: ExpRes) => {
+        const { trainingIds, approveOrReject, userRole, email } = req.body
+        if(userRole !== UserRoleEnum.APPROVER){
+            const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
+            return res.status(error.statusCode).send({
+                info: '',
+                message: error.message
+            })
+        }
+
+        try {
+            const [approverUser, trainingsList]= await Promise.all([
+                dataSource.getRepository(User).findOneBy( { email } ),
+                dataSource
+                    .getRepository(Training)
+                    .findBy({ id: In(trainingIds)})
+            ])
+
+
+            if(trainingsList.length !== trainingIds.length || !approverUser){
+                const error = new Error(null, StatusCode.E404, Message.ErrFind)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
+            trainingsList.forEach( training => {
+                training.trainingStatus = approveOrReject
+                training.operatedBy = approverUser
+            })
+
+            await Promise.all(trainingsList.map(training => training.save()))
+
+            return res.status(StatusCode.E200).send({
+                info: '',
+                message: Message.OK
+            })
+        }catch (e) {
+            console.log(e.message)
+            const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
+        }
+
     }
 }
 

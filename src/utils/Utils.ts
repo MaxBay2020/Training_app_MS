@@ -1,5 +1,7 @@
 import dataSource from '../data-source';
-import {EntityTarget, ObjectType, SelectQueryBuilder} from "typeorm";
+import {ObjectType, SelectQueryBuilder} from "typeorm";
+import Training from "../entities/Training";
+import {TrainingStatusEnum, UserRoleEnum} from "../enums/enums";
 
 class Utils {
      static queryAllRecordsInTable<T, Entity>(identifiers: T[], tableName: ObjectType<Entity>, primaryKeyColumnName: string) :Promise<Entity[]> {
@@ -43,6 +45,41 @@ class Utils {
             queryBuilder.orWhere(`${columnName} LIKE :value`, { value: `%${searchKeyword}%` })
         })
         return queryBuilder
+    }
+
+
+    static formattedTrainingList = (originalTrainingList: Training[], userRole: string) => {
+        if(userRole === UserRoleEnum.SERVICER){
+            return originalTrainingList.map(item => {
+                const { id, trainingName, trainingType, trainingStatus, hoursCount, startDate, endDate, trainingURL } = item
+                return {
+                    id,
+                    trainingName,
+                    trainingType,
+                    trainingStatus,
+                    hoursCount,
+                    startDate,
+                    endDate,
+                    trainingURL
+                }
+            })
+        }else if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
+            return originalTrainingList.map(item => {
+                const { user, operatedAt, operatedBy, note, createdAt, updatedAt, isDelete, isActive, ...rest } = item
+                return {
+                    ...rest,
+
+                    userEmail: item.user?.email,
+                    userFirstName: item.user?.firstName,
+                    userLastName: item.user?.lastName,
+
+                    servicerId: item.user?.servicer.id,
+                    servicerName: item.user?.servicer.servicerMasterName,
+                }
+            })
+        }else{
+            return []
+        }
     }
 }
 

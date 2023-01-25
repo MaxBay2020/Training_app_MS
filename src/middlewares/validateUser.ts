@@ -3,7 +3,6 @@ import User from "../entities/User"
 import dataSource from "../data-source"
 import Error, {Message, StatusCode} from "../enums/Error";
 import jwt from "jsonwebtoken"
-import {UserRoleEnum} from "../enums/enums";
 
 export const validateUser = async (req: ExpReq, res: ExpRes, next: NextFunction) => {
 
@@ -39,7 +38,8 @@ export const validateUser = async (req: ExpReq, res: ExpRes, next: NextFunction)
                 .select(['userRole.userRoleName AS userRole'])
                 .getRawOne() as User
 
-            if (!user) {
+
+            if (!userFound) {
                 const error = new Error(null, StatusCode.E404, Message.ErrFind)
                 return res.status(error.statusCode).send({
                     info: error.info,

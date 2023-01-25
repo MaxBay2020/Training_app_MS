@@ -16,11 +16,19 @@ trainingRouters.get('/:trainingId', validateUser, TrainingController.queryTraini
 // create a training
 trainingRouters.post('/add', validateUser, TrainingController.createTraining)
 
+// update training status, eg: pending -> approved OR rejected
+// approver use!!!
+trainingRouters.put('/status', validateUser, TrainingController.updateTrainingStatusByIds)
+
 // update a training
 trainingRouters.put('/:trainingId', validateUser, TrainingController.updateTrainingById)
 
 // withdraw a training
 trainingRouters.delete('/:trainingId', validateUser, TrainingController.deleteTrainingById)
+
+
+
+
 
 
 export default trainingRouters

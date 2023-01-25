@@ -32,10 +32,8 @@ class Training extends BaseClass {
     @ManyToOne(()=>User, user => user.trainings)
     user: User
 
-    @Column({
-        nullable: true
-    })
-    operatedBy: string
+    @ManyToOne(()=>User, user => user.operatedTrainings)
+    operatedBy: User
 
     @Column({
         nullable: true
