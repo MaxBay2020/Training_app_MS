@@ -49,6 +49,11 @@ class TrainingController {
             let trainingListQueryBuilder = dataSource.getRepository(Training)
                 .createQueryBuilder('training')
 
+            if(userRole === UserRoleEnum.APPROVER){
+                trainingListQueryBuilder
+                    .where('training.trainingStatus = :value', { value :TrainingStatusEnum.PENDING })
+            }
+
 
             if(userRole === UserRoleEnum.SERVICER){
                 trainingListQueryBuilder
@@ -67,7 +72,7 @@ class TrainingController {
                         trainingListQueryBuilder,
                         ['training.trainingName', 'training.trainingType', 'training.trainingStatus'],
                         searchKeyword as string)
-                }else if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
+                }else if(userRole === UserRoleEnum.ADMIN){
                     trainingListQueryBuilder = Utils.specifyColumnsToSearch(
                         trainingListQueryBuilder,
                         [
@@ -81,7 +86,23 @@ class TrainingController {
                             'sm.servicerMasterName'
                         ],
                         searchKeyword as string)
-                }
+                }else if(userRole === UserRoleEnum.APPROVER){
+                    trainingListQueryBuilder = Utils.specifyColumnsToSearch(
+                        trainingListQueryBuilder,
+                        [
+                            'training.trainingName',
+                            'training.trainingType',
+                            'training.trainingStatus',
+                            'user.firstName',
+                            'user.lastName',
+                            'user.email',
+                            'sm.id',
+                            'sm.servicerMasterName'
+                        ],
+                        searchKeyword as string)                }
+
+                console.log(trainingListQueryBuilder.getQuery())
+                console.log(await trainingListQueryBuilder.getMany())
             }
 
 

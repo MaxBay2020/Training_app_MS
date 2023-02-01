@@ -1,5 +1,5 @@
 import dataSource from '../data-source';
-import {ObjectType, SelectQueryBuilder} from "typeorm";
+import {Brackets, ObjectType, SelectQueryBuilder} from "typeorm";
 import Training from "../entities/Training";
 import {TrainingStatusEnum, UserRoleEnum} from "../enums/enums";
 
@@ -41,9 +41,16 @@ class Utils {
      * @param searchKeyword
      */
     static specifyColumnsToSearch = (queryBuilder: SelectQueryBuilder<any>, columnNames: string[], searchKeyword: string) :SelectQueryBuilder<any> => {
-        columnNames.forEach(columnName => {
-            queryBuilder.orWhere(`${columnName} LIKE :value`, { value: `%${searchKeyword}%` })
-        })
+        queryBuilder.andWhere(new Brackets(qb => {
+            columnNames.forEach(columnName => {
+                qb.orWhere(`${columnName} LIKE :value`, { value: `%${searchKeyword}%` })
+            })
+            return qb
+        }))
+
+        // columnNames.forEach(columnName => {
+        //     queryBuilder.orWhere(`${columnName} LIKE :value`, { value: `%${searchKeyword}%` })
+        // })
         return queryBuilder
     }
 
