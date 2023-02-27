@@ -49,10 +49,13 @@ class TrainingController {
             let trainingListQueryBuilder = dataSource.getRepository(Training)
                 .createQueryBuilder('training')
 
-            if(userRole === UserRoleEnum.APPROVER){
-                trainingListQueryBuilder
-                    .where('training.trainingStatus = :value', { value :TrainingStatusEnum.PENDING })
-            }
+            /**
+                * NOTE: if the approvers ONLY want to see trainig status with PENDING, please uncomment the code below;
+                if(userRole === UserRoleEnum.APPROVER){
+                    trainingListQueryBuilder
+                        .where('training.trainingStatus = :value', { value :TrainingStatusEnum.PENDING })
+                }
+             */
 
 
             if(userRole === UserRoleEnum.SERVICER){
@@ -99,7 +102,8 @@ class TrainingController {
                             'sm.id',
                             'sm.servicerMasterName'
                         ],
-                        searchKeyword as string)                }
+                        searchKeyword as string)
+                }
 
                 console.log(trainingListQueryBuilder.getQuery())
                 console.log(await trainingListQueryBuilder.getMany())
@@ -122,7 +126,6 @@ class TrainingController {
 
             return res.status(200).send({
                 userRole,
-                // TODO: need to be optimised
                 trainingList: Utils.formattedTrainingList(trainingList, userRole),
                 totalPage
             })
@@ -288,6 +291,15 @@ class TrainingController {
     static updateTrainingById = async (req: ExpReq, res: ExpRes) => {
         const { email, userRole, trainingName, trainingType, startDate, endDate, hoursCount, trainingURL } = req.body
         const { trainingId } = req.params
+
+
+        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate){
+            const error = new Error(null, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
+        }
 
         if(userRole === UserRoleEnum.ADMIN){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)

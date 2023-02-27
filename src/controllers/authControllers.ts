@@ -6,7 +6,14 @@ import jwt from 'jsonwebtoken'
 import {access_token_expiresIn, saltRounds} from "../utils/consts";
 import {validate} from "class-validator"
 import bcrypt from 'bcrypt'
+import dataSource from "../data-source";
 
+
+type UserWithDetails = User &  {
+    userName: string,
+    servicerId: string,
+    servicerMasterName: string,
+}
 
 class AuthControllers {
     static loginUser = async (req: ExpReq, res: ExpRes) => {
@@ -21,11 +28,22 @@ class AuthControllers {
         }
 
         try {
-            const user: User = await AppDataSource.getRepository(User)
+
+            const user: UserWithDetails = await AppDataSource
+                .getRepository(User)
                 .createQueryBuilder('user')
-                .select(['user.email AS email', 'user.password AS password, user.firstName AS firstName'])
+                .leftJoin('user.servicer', 'servicerMaster')
+                .select([
+                    'user.email AS email',
+                    'user.password AS password',
+                    'user.firstName AS firstName',
+                    'CONCAT_WS(" ", user.firstName, user.lastName) AS userName',
+                    'user.servicerId',
+                    'servicerMaster.servicerMasterName AS servicerMasterName'
+                ])
                 .where('email = :email', { email })
-                .getRawOne() as User
+                .getRawOne() as UserWithDetails
+
 
             if(!user){
                 const error = new Error(null, StatusCode.E404, Message.ErrFind)
@@ -34,6 +52,8 @@ class AuthControllers {
                     message: error.message
                 })
             }
+
+
 
             const hash = user.password
             const isCorrect = await bcrypt.compare(password, hash)
@@ -52,10 +72,12 @@ class AuthControllers {
                 expiresIn: access_token_expiresIn
             })
 
-            const { firstName } = user
+            const { userName, servicerId, servicerMasterName } = user
             return res.status(200).send({
                 accessToken: token,
-                firstName,
+                userName,
+                servicerId,
+                servicerMasterName
             })
         }catch (e) {
             console.log(e.message)
