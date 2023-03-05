@@ -3,6 +3,10 @@ import TrainingController from "../controllers/trainingControllers";
 import {validateUser} from "../middlewares/validateUser";
 const trainingRouters = express.Router()
 
+
+// get all training credits
+trainingRouters.get('/trainingCredits', validateUser, TrainingController.queryAllTrainingCredits)
+
 // get all trainings
 trainingRouters.get('/', validateUser, TrainingController.queryAllTrainings)
 

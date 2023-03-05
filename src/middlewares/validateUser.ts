@@ -34,8 +34,9 @@ export const validateUser = async (req: ExpReq, res: ExpRes, next: NextFunction)
                 .getRepository(User)
                 .createQueryBuilder('user')
                 .innerJoinAndSelect('user.userRole', 'userRole')
+                .leftJoinAndSelect('user.servicer', 'servicerMaster')
                 .where('user.email = :email', { email })
-                .select(['userRole.userRoleName AS userRole'])
+                .select(['userRole.userRoleName AS userRole', 'servicerMaster.id AS servicer'])
                 .getRawOne() as User
 
 
@@ -49,6 +50,7 @@ export const validateUser = async (req: ExpReq, res: ExpRes, next: NextFunction)
 
             req.body.userRole = userFound.userRole
             req.body.email = email
+            req.body.servicerMasterId = userFound.servicer
 
             next()
             return
