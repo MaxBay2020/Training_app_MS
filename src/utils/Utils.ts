@@ -28,6 +28,34 @@ class Utils {
              }
          }
 
+        if(sortByNumber === 3){
+            return {
+                sortByFieldName: 'trainingStatus',
+                sortByOrder: 'ASC'
+            }
+        }
+
+        if(sortByNumber === 4){
+            return {
+                sortByFieldName: 'trainingType',
+                sortByOrder: 'ASC'
+            }
+        }
+
+        if(sortByNumber === 5){
+            return {
+                sortByFieldName: 'startDate',
+                sortByOrder: 'DESC'
+            }
+        }
+
+        if(sortByNumber === 6){
+            return {
+                sortByFieldName: 'endDate',
+                sortByOrder: 'DESC'
+            }
+        }
+
 
          return {
              sortByFieldName: 'createdAt',
