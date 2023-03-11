@@ -13,7 +13,7 @@ import BaseClass from "./BaseClass";
 import Training from "./Training";
 
 
-@Entity('servicer master')
+@Entity('servicer_master')
 class ServicerMaster extends BaseClass {
     @PrimaryColumn()
     id: string

@@ -37,52 +37,95 @@ class Utils {
 
     /**
      * which columns should be searched for
-     * @param queryBuilder
-     * @param columnNames
+     * @param subQuery
+     * @param columnNamesToSearch
      * @param searchKeyword
      */
-    static specifyColumnsToSearch = (queryBuilder: SelectQueryBuilder<any>, columnNames: string[], searchKeyword: string) :SelectQueryBuilder<any> => {
-        queryBuilder.andWhere(new Brackets(qb => {
-            columnNames.forEach(columnName => {
-                qb.orWhere(`${columnName} LIKE :value`, { value: `%${searchKeyword}%` })
+    static specifyColumnsToSearch = (subQuery: SelectQueryBuilder<any>, columnNamesToSearch: string[], searchKeyword: string) :SelectQueryBuilder<any> => {
+        const outQuery: SelectQueryBuilder<any> = dataSource
+            .createQueryBuilder()
+            .select()
+
+        outQuery.andWhere(new Brackets(qb => {
+            columnNamesToSearch.forEach(columnNameToSearch => {
+                qb.orWhere(`subQuery.${columnNameToSearch} LIKE :value`, { value: `%${searchKeyword}%` })
             })
             return qb
         }))
 
+        outQuery.from(`(${subQuery.getQuery()})`, 'subQuery')
+
+        // console.log(outQuery.getQuery())
+
         // columnNames.forEach(columnName => {
         //     queryBuilder.orWhere(`${columnName} LIKE :value`, { value: `%${searchKeyword}%` })
         // })
-        return queryBuilder
+        return outQuery
     }
 
 
-    static formattedTrainingList = (originalTrainingList: Training[], userRole: string) => {
+    static formattedTrainingList = (originalTrainingList: any[], userRole: string) => {
         if(userRole === UserRoleEnum.SERVICER){
             return originalTrainingList.map(item => {
-                const { id, trainingName, trainingType, trainingStatus, hoursCount, startDate, endDate, trainingURL } = item
+                const {
+                    training_id,
+                    training_trainingName,
+                    training_trainingType,
+                    training_trainingStatus,
+                    training_hoursCount,
+                    training_startDate,
+                    training_endDate,
+                    training_trainingURL
+                } = item
                 return {
-                    id,
-                    trainingName,
-                    trainingType,
-                    trainingStatus,
-                    hoursCount,
-                    startDate,
-                    endDate,
-                    trainingURL
+                    id: training_id,
+                    trainingName: training_trainingName,
+                    trainingType: training_trainingType,
+                    trainingStatus: training_trainingStatus,
+                    hoursCount: training_hoursCount,
+                    startDate: training_startDate,
+                    endDate: training_endDate,
+                    trainingURL: training_trainingURL
                 }
             })
         }else if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
             return originalTrainingList.map(item => {
-                const { user, operatedAt, operatedBy, note, createdAt, updatedAt, isDelete, isActive, ...rest } = item
+                const {
+                    user_email,
+                    user_firstName,
+                    user_lastName,
+
+                    sm_id,
+                    sm_servicerMasterName,
+
+                    training_id,
+                    training_trainingName,
+                    training_trainingType,
+                    training_trainingStatus,
+                    training_hoursCount,
+                    training_startDate,
+                    training_endDate,
+                    training_trainingURL,
+
+                } = item
+
                 return {
-                    ...rest,
+                    userEmail: user_email,
+                    userFirstName: user_firstName,
+                    userLastName: user_lastName,
 
-                    userEmail: item.user?.email,
-                    userFirstName: item.user?.firstName,
-                    userLastName: item.user?.lastName,
+                    servicerId: sm_id,
+                    servicerName: sm_servicerMasterName,
 
-                    servicerId: item.user?.servicer.id,
-                    servicerName: item.user?.servicer.servicerMasterName,
+                    id: training_id,
+                    trainingName: training_trainingName,
+                    trainingType: training_trainingType,
+                    trainingStatus: training_trainingStatus,
+                    hoursCount: training_hoursCount,
+                    startDate: training_startDate,
+                    endDate: training_endDate,
+                    trainingURL: training_trainingURL
+
                 }
             })
         }else{
