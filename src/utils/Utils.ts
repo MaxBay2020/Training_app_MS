@@ -42,29 +42,39 @@ class Utils {
      * @param searchKeyword
      */
     static specifyColumnsToSearch = (subQuery: SelectQueryBuilder<any>, columnNamesToSearch: string[], searchKeyword: string) :SelectQueryBuilder<any> => {
-        const outQuery: SelectQueryBuilder<any> = dataSource
-            .createQueryBuilder()
-            .select()
-
-        outQuery.andWhere(new Brackets(qb => {
+        subQuery.andWhere(new Brackets(qb => {
             columnNamesToSearch.forEach(columnNameToSearch => {
-                qb.orWhere(`subQuery.${columnNameToSearch} LIKE :value`, { value: `%${searchKeyword}%` })
+                qb.orWhere(`${columnNameToSearch} LIKE :value`, { value: `%${searchKeyword}%` })
             })
             return qb
         }))
 
-        outQuery.from(`(${subQuery.getQuery()})`, 'subQuery')
+        return subQuery
 
-        // console.log(outQuery.getQuery())
 
-        // columnNames.forEach(columnName => {
-        //     queryBuilder.orWhere(`${columnName} LIKE :value`, { value: `%${searchKeyword}%` })
-        // })
-        return outQuery
+        // const outQuery: SelectQueryBuilder<any> = dataSource
+        //     .createQueryBuilder()
+        //     .select()
+        //
+        // outQuery.andWhere(new Brackets(qb => {
+        //     columnNamesToSearch.forEach(columnNameToSearch => {
+        //         qb.orWhere(`subQuery.${columnNameToSearch} LIKE :value`, { value: `%${searchKeyword}%` })
+        //     })
+        //     return qb
+        // }))
+        //
+        // outQuery.from(`(${subQuery.getQuery()})`, 'subQuery')
+        //
+        // // console.log(outQuery.getQuery())
+        //
+        // // columnNames.forEach(columnName => {
+        // //     queryBuilder.orWhere(`${columnName} LIKE :value`, { value: `%${searchKeyword}%` })
+        // // })
+        // return outQuery
     }
 
 
-    static formattedTrainingList = (originalTrainingList: any[], userRole: string) => {
+    static formattedTrainingList = (originalTrainingList: any[], userRole: string): {} => {
         if(userRole === UserRoleEnum.SERVICER){
             return originalTrainingList.map(item => {
                 const {
@@ -129,7 +139,7 @@ class Utils {
                 }
             })
         }else{
-            return []
+            return {}
         }
     }
 

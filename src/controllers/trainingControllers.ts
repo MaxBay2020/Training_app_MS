@@ -129,33 +129,6 @@ class TrainingController {
             let trainingListQueryBuilder: SelectQueryBuilder<Training> = dataSource
                 .createQueryBuilder()
 
-            /**
-                * NOTE: if the approvers ONLY want to see trainig status with PENDING, please uncomment the code below;
-                if(userRole === UserRoleEnum.APPROVER){
-                    trainingListQueryBuilder
-                        .where('training.trainingStatus = :value', { value :TrainingStatusEnum.PENDING })
-                }
-             */
-            // const subQueryWithoutWithdrawn: SelectQueryBuilder<Training> = dataSource.getRepository(Training)
-            //     .createQueryBuilder('training')
-            // if(userRole === UserRoleEnum.APPROVER){
-            //     subQueryWithoutWithdrawn
-            //         .where('training.trainingStatus <> :value', { value :TrainingStatusEnum.WITHDRAWN })
-            // }
-
-            // // subquery for stats: remove duplicates
-            // const distinctTrainingByTrainingName :SelectQueryBuilder<Training> = AppDataSource
-            //     .getRepository(Training)
-            //     .createQueryBuilder('training')
-            //     .innerJoin('training.servicerMaster', 'servicerMaster',
-            //         'servicerMaster.id = :servicerMasterId', {servicerMasterId})
-            //     .select(['DISTINCT training.trainingName, training.trainingType'])
-            //     .where('training.trainingStatus = :trainingStatus', {trainingStatus: TrainingStatusEnum.APPROVED})
-            //     .andWhere(':currentFiscalStartTime < training.startDate AND training.startDate < :currentFiscalEndTime', {
-            //         currentFiscalStartTime,
-            //         currentFiscalEndTime
-            //     })
-            //
 
             let subQueryWithFilteredTrainingStatus: SelectQueryBuilder<Training> = dataSource.getRepository(Training)
                     .createQueryBuilder('training')
@@ -171,8 +144,11 @@ class TrainingController {
 
             if(userRole === UserRoleEnum.SERVICER){
                 subQueryWithFilteredTrainingStatus
-                    .innerJoinAndSelect('training.user', 'user', 'user.email = :email', { email } )
+                    .innerJoinAndSelect('training.user', 'user')
+                    .where('user.email = :email', { email })
             }
+
+
 
             if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
                 subQueryWithFilteredTrainingStatus
@@ -180,12 +156,10 @@ class TrainingController {
                     .innerJoinAndSelect('user.servicer', 'sm')
             }
 
-            // let subQueryWithSearchKeyWords: SelectQueryBuilder<any> = AppDataSource
-            //     .createQueryBuilder()
-            //     .select()
 
             subQueryWithFilteredTrainingStatus
-                .orderBy(`training.${sortByFieldName}`, sortByOrder)
+                .orderBy(`training_${sortByFieldName}`, sortByOrder)
+
 
             if(searchKeyword){
                 if(userRole === UserRoleEnum.SERVICER){
@@ -197,6 +171,7 @@ class TrainingController {
                             'training.trainingStatus'
                         ],
                         searchKeyword as string)
+
                 }else if(userRole === UserRoleEnum.ADMIN){
                     subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
                         subQueryWithFilteredTrainingStatus,
@@ -215,83 +190,39 @@ class TrainingController {
                     subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
                         subQueryWithFilteredTrainingStatus,
                         [
-                            'training_trainingName',
-                            'training_trainingType',
-                            'training_trainingStatus',
-                            'user_firstName',
-                            'user_lastName',
-                            'user_email',
-                            'sm_id',
-                            'sm_servicerMasterName'
+                            'training.trainingName',
+                            'training.trainingType',
+                            'training.trainingStatus',
+                            'user.firstName',
+                            'user.lastName',
+                            'user.email',
+                            'sm.id',
+                            'sm.servicerMasterName'
                         ],
                         searchKeyword as string)
-                }
 
+                }
             }
 
-
-            // console.log(subQueryWithFilteredTrainingStatus.getQuery())
-
-
-            // console.log(trainingListQueryBuilder.getQuery())
-
-            // const approvedTrainingByServicerCount = await AppDataSource
-            //     .createQueryBuilder()
-            //     .select(['COUNT(*) AS total', 'subtable.trainingType AS trainingType'])
-            //     .from(`(${distinctTrainingByTrainingName.getQuery()})`, 'subtable')
-            //     .setParameters(distinctTrainingByTrainingName.getParameters())
-            //     .groupBy('subtable.trainingType')
-            //     .getRawMany()
-
-            // const subQueryWithoutWithdrawn: SelectQueryBuilder<Training> = dataSource.getRepository(Training)
-            //     .createQueryBuilder('training')
-            //
-            // if(userRole === UserRoleEnum.APPROVER){
-            //     subQueryWithoutWithdrawn
-            //         .select('*')
-            //         .where('training.trainingStatus <> :value', { value :TrainingStatusEnum.WITHDRAWN })
-            // }
-
-            // console.log(subQueryWithoutWithdrawn.getQuery())
-
-            // const totalNumber: number = await trainingListQueryBuilder
-            //     .select('*')
-            //     .from(`(${subQueryWithoutWithdrawn.getQuery()})`, 'subtable')
-            //     .getCount() as number
-
-            // const totalNumber: number = 10
-
-            // TODO: NEED TO OPTIMIZE!!!
-            const totalNumber: number =
-                (await subQueryWithFilteredTrainingStatus.getRawMany())
-                    .length as number
-
-
-            // const trainingList: Training[] = await trainingListQueryBuilder
-            //     .select('*')
-            //     .from(`(${subQueryWithoutWithdrawn.getQuery()})`, 'subtable')
-            //     .setParameters(subQueryWithoutWithdrawn.getParameters())
-            //     .skip(startIndex)
-            //     .take(+limit)
-            //     .getRawMany() as Training[]
-
-            // const trainingList = await trainingListQueryBuilder
-            //     .select('*')
-            //     .from(`(${subQueryWithFilteredTrainingStatus.getQuery()})`, 'subtable')
-            //     .setParameters(subQueryWithFilteredTrainingStatus.getParameters())
-            //     .skip(startIndex)
-            //     .take(+limit)
-            //     .getRawMany()
+            const totalNumber: number = await subQueryWithFilteredTrainingStatus.getCount() as number
 
             const trainingList = await trainingListQueryBuilder
-                .select('*')
+                .select()
                 .from(`(${subQueryWithFilteredTrainingStatus.getQuery()})`, 'subtable')
                 .setParameters(subQueryWithFilteredTrainingStatus.getParameters())
                 .skip(startIndex)
                 .take(+limit)
                 .getRawMany()
 
-            // TODO: NEED TO OPTIMIZE!!!
+            // take and skip may look like we are using limit and offset, but they aren't.
+            // limit and offset may not work as you expect once you have more complicated queries with joins or subqueries.
+            // Using take and skip will prevent those issues.
+            // const trainingList = await subQueryWithFilteredTrainingStatus
+            //     .offset(startIndex)
+            //     .limit(+limit)
+            //     .getRawMany()
+
+
             let trainingListFiltered = trainingList
             if(userRole === UserRoleEnum.APPROVER){
                 trainingListFiltered = trainingList.filter(item => item.training_trainingStatus !== TrainingStatusEnum.WITHDRAWN)
