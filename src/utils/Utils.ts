@@ -3,6 +3,7 @@ import {Brackets, ObjectType, SelectQueryBuilder} from "typeorm";
 import Training from "../entities/Training";
 import {trainingScore, TrainingTypeEnum, UserRoleEnum} from "../enums/enums";
 import moment from "moment";
+import {eClassModuleCount} from "./consts";
 
 class Utils {
      static queryAllRecordsInTable<T, Entity>(identifiers: T[], tableName: ObjectType<Entity>, primaryKeyColumnName: string) :Promise<Entity[]> {
@@ -185,8 +186,14 @@ class Utils {
      */
     static getScoreByTrainingType = (trainingType: TrainingTypeEnum, count: string): number => {
         if(trainingType === TrainingTypeEnum.LiveTraining){
+            if(+count === 0){
+                return 0
+            }
             return parseFloat(trainingScore.LiveTraining) / 100
         }else if(trainingType === TrainingTypeEnum.ECLASS){
+            if(+count !== eClassModuleCount){
+                return 0
+            }
             return parseFloat(trainingScore.EClass) / 100
         }else if(trainingType === TrainingTypeEnum.Webinar){
             return parseFloat(trainingScore.Webinar) * +count / 100

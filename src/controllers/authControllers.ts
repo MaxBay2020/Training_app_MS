@@ -33,13 +33,15 @@ class AuthControllers {
                 .getRepository(User)
                 .createQueryBuilder('user')
                 .leftJoin('user.servicer', 'servicerMaster')
+                .innerJoinAndSelect('user.userRole', 'userRole')
                 .select([
                     'user.email AS email',
                     'user.password AS password',
                     'user.firstName AS firstName',
                     'CONCAT_WS(" ", user.firstName, user.lastName) AS userName',
                     'user.servicerId',
-                    'servicerMaster.servicerMasterName AS servicerMasterName'
+                    'servicerMaster.servicerMasterName AS servicerMasterName',
+                    'userRole.userRoleName AS userRole'
                 ])
                 .where('email = :email', { email })
                 .getRawOne() as UserWithDetails
@@ -72,10 +74,11 @@ class AuthControllers {
                 expiresIn: access_token_expiresIn
             })
 
-            const { userName, servicerId, servicerMasterName } = user
+            const { userName, userRole, servicerId, servicerMasterName } = user
             return res.status(200).send({
                 accessToken: token,
                 userName,
+                userRole,
                 servicerId,
                 servicerMasterName
             })
