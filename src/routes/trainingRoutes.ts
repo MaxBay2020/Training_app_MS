@@ -4,7 +4,7 @@ import {validateUser} from "../middlewares/validateUser";
 const trainingRouters = express.Router()
 
 
-// get all training credits
+// get training with pagination, sorting, and search
 trainingRouters.get('/trainingCredits', validateUser, TrainingController.queryAllTrainingCredits)
 
 // get all trainings

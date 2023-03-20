@@ -3,7 +3,8 @@ import {Brackets, ObjectType, SelectQueryBuilder} from "typeorm";
 import Training from "../entities/Training";
 import {trainingScore, TrainingTypeEnum, UserRoleEnum} from "../enums/enums";
 import moment from "moment";
-import {eClassModuleCount} from "./consts";
+import {eClassModuleCount, logoUrl} from "./consts";
+import PDFDocument = PDFKit.PDFDocument;
 
 class Utils {
      static queryAllRecordsInTable<T, Entity>(identifiers: T[], tableName: ObjectType<Entity>, primaryKeyColumnName: string) :Promise<Entity[]> {
@@ -22,9 +23,21 @@ class Utils {
      * @param sortByNumber
      */
     static getSortingMethod = (sortByNumber = 1): { sortByFieldName: string, sortByOrder: 'ASC' | 'DESC' } => {
-         if(sortByNumber === 2){
+        if(sortByNumber === 1){
+            return {
+                sortByFieldName: 'createdAt',
+                sortByOrder: 'DESC'
+            }
+        }
+        else if(sortByNumber === 2){
              return {
                  sortByFieldName: 'trainingName',
+                 sortByOrder: 'ASC'
+             }
+         }
+         else if(sortByNumber === 3){
+             return {
+                 sortByFieldName: 'servicerMasterName',
                  sortByOrder: 'ASC'
              }
          }
@@ -51,27 +64,6 @@ class Utils {
         }))
 
         return subQuery
-
-
-        // const outQuery: SelectQueryBuilder<any> = dataSource
-        //     .createQueryBuilder()
-        //     .select()
-        //
-        // outQuery.andWhere(new Brackets(qb => {
-        //     columnNamesToSearch.forEach(columnNameToSearch => {
-        //         qb.orWhere(`subQuery.${columnNameToSearch} LIKE :value`, { value: `%${searchKeyword}%` })
-        //     })
-        //     return qb
-        // }))
-        //
-        // outQuery.from(`(${subQuery.getQuery()})`, 'subQuery')
-        //
-        // // console.log(outQuery.getQuery())
-        //
-        // // columnNames.forEach(columnName => {
-        // //     queryBuilder.orWhere(`${columnName} LIKE :value`, { value: `%${searchKeyword}%` })
-        // // })
-        // return outQuery
     }
 
 
@@ -199,6 +191,109 @@ class Utils {
             return parseFloat(trainingScore.Webinar) * +count / 100
         }
         return -1
+    }
+
+    /**
+     * generate header for pdf file
+     * @param doc
+     */
+    static generatePDFHeader = (doc: PDFDocument) => {
+        doc.image(logoUrl, 50, 45, { width: 50 })
+            .fillColor('#444444')
+            .fontSize(14)
+            .text('SF-DART TRSII Credit Report', 110, 64)
+            // .fontSize(10)
+            // .text('123 Main Street', 200, 65, { align: 'right' })
+            // .text('New York, NY, 10025', 200, 80, { align: 'right' })
+            .moveDown();
+    }
+
+    /**
+     * generate footer for pdf file
+     * @param doc
+     */
+    static generatePDFFooter = (doc: PDFDocument) => {
+        doc.fontSize(
+            10,
+        ).text(
+            'Thank you for using SF-DART. If you have any questions, please contact support@hudsfdart.com',
+            50,
+            780,
+            { align: 'center', width: 500 },
+        );
+    }
+
+    /**
+     * generate table row of pdf file
+     * @param doc
+     * @param y
+     * @param trainingListStats
+     * @param originalPositionX
+     * @param cellGap
+     * @param minimumCellWidth
+     * @param maximumCellWidth
+     */
+    static generateTableRow = (doc: PDFDocument, y: number, trainingListStats: any, originalPositionX: number, cellGap: number, minimumCellWidth: number, maximumCellWidth: number) => {
+        const temp = doc.font('Helvetica').fontSize(6)
+        Object.keys(trainingListStats).forEach((ele, index) => {
+            const cellWidth = ele === 'smName' || ele === 'LiveTraining' ? maximumCellWidth : minimumCellWidth
+            temp.text(trainingListStats[ele], originalPositionX + index * cellGap, y, { width: cellWidth , align: 'center' })
+            // generate horizontal line
+            Utils.generateHr(doc, '#bbbbbb', 1 , originalPositionX + 13, originalPositionX + Object.keys(trainingListStats).length * cellGap - 43, y + 13)
+        })
+    }
+
+    /**
+     * generate table of pdf file
+     * @param doc
+     * @param trainingListStats
+     */
+    static generatePDFTable = (doc: PDFDocument, trainingListStats: any) => {
+        const tableTop: number = 240
+        const cellGap: number = 100
+        const originalPositionX: number = 10
+        const minimumCellWidth = 70
+        const maximumCellWidth = 70
+        let i = 0
+
+        // generate table head
+        // Servicer ID	Servicer Name	#Appd.EClass	#Appd.Webinar	#Appd.LiveTraining	Credits
+        const tableHeaders = ['Servicer ID', 'Servicer Name','# Appd.EClass', '# Appd.Webinar', '# Appd.LiveTraining', '# Credits']
+        doc
+            .font('Helvetica-Bold')
+            .fontSize(6)
+        tableHeaders.forEach( ele => {
+            const cellWidth = ele === 'Servicer Name' || ele === 'LiveTraining' ? maximumCellWidth : minimumCellWidth
+            doc.text(ele, originalPositionX + i++ * cellGap, tableTop, { width: cellWidth, align: "center" })
+        })
+
+        // generate horizontal line
+        Utils.generateHr(doc, '#aaaaaa', 1 , originalPositionX + 13, originalPositionX + i * cellGap - 43, tableTop + 15)
+
+        // generate table body
+        trainingListStats.forEach((ele: any, index: number) => {
+            const y = tableTop + (index + 1) * 20;
+            Utils.generateTableRow(doc, y, ele, originalPositionX, cellGap, minimumCellWidth, maximumCellWidth)
+        })
+
+    }
+
+    /**
+     * generate horizontal line
+     * @param doc
+     * @param color
+     * @param lineWidth
+     * @param startX
+     * @param endX
+     * @param y
+     */
+    static generateHr = (doc: PDFDocument, color: string, lineWidth: number, startX: number, endX: number, y: number) => {
+        doc
+            .strokeColor(color)
+            .lineWidth(lineWidth)
+            .moveTo(startX, y)
+            .lineTo(endX, y)
+            .stroke();
     }
 }
 

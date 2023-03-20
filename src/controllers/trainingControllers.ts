@@ -102,7 +102,7 @@ class TrainingController {
 
 
     /**
-     * get all training data
+     * get all training data with pagination, sorting, and search
      * @param req
      * @param res
      */
