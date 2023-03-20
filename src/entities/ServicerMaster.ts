@@ -10,9 +10,10 @@ import
     from 'typeorm'
 import User from "./User";
 import BaseClass from "./BaseClass";
+import Training from "./Training";
 
 
-@Entity('servicer master')
+@Entity('servicer_master')
 class ServicerMaster extends BaseClass {
     @PrimaryColumn()
     id: string
@@ -22,6 +23,9 @@ class ServicerMaster extends BaseClass {
 
     @OneToMany(() => User, user => user.servicer)
     users: User[]
+
+    @OneToMany(() => Training, training => training.servicerMaster)
+    trainings: Training[]
 }
 
 export default ServicerMaster
