@@ -28,6 +28,9 @@ class User extends BaseClass {
     email: string
 
     @Column()
+    password: string
+
+    @Column()
     firstName: string
 
     @Column()
@@ -45,6 +48,10 @@ class User extends BaseClass {
 
     @OneToMany(() => Training, training => training.user)
     trainings: Training[]
+
+    @OneToMany(() => Training, training => training.operatedBy)
+    operatedTrainings: Training[]
+
 }
 
 export default User

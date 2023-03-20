@@ -18,4 +18,16 @@ export enum TrainingTypeEnum {
     Webinar = 'Webinar'
 }
 
+export enum fiscalEndDate {
+    month = 9,
+    date = 30
+}
+
+export enum trainingScore {
+    LiveTraining = '0.5%',
+    EClass = '0.5%',
+    Webinar = '0.2%'
+}
+
+
 

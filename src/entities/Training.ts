@@ -10,6 +10,7 @@ import {TrainingStatusEnum, TrainingTypeEnum} from "../enums/enums";
 import User from "./User";
 import BaseClass from "./BaseClass";
 import {IsInt, MaxLength} from "class-validator";
+import ServicerMaster from "./ServicerMaster";
 
 
 @Entity('training')
@@ -32,10 +33,11 @@ class Training extends BaseClass {
     @ManyToOne(()=>User, user => user.trainings)
     user: User
 
-    @Column({
-        nullable: true
-    })
-    operatedBy: string
+    @ManyToOne(()=>ServicerMaster, servicerMaster => servicerMaster.trainings)
+    servicerMaster: ServicerMaster
+
+    @ManyToOne(()=>User, user => user.operatedTrainings)
+    operatedBy: User
 
     @Column({
         nullable: true
