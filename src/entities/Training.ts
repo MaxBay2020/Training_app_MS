@@ -23,12 +23,9 @@ class Training extends BaseClass {
     trainingName: string
 
     @Column({
-        type: 'enum',
-        enum: TrainingStatusEnum,
-        nullable: true,
-        default: TrainingStatusEnum.PENDING
+        default: TrainingStatusEnum.SUBMITTED
     })
-    trainingStatus: TrainingStatusEnum
+    trainingStatus: string
 
     @ManyToOne(()=>User, user => user.trainings)
     user: User

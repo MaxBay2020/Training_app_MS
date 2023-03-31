@@ -198,10 +198,10 @@ class Utils {
      * @param doc
      */
     static generatePDFHeader = (doc: PDFDocument) => {
-        doc.image(logoUrl, 50, 45, { width: 50 })
+        doc.image(logoUrl, 50, 45, { width: 100 })
             .fillColor('#444444')
             .fontSize(14)
-            .text('SF-DART TRSII Credit Report', 110, 64)
+            .text('Credit Report', 50, 65)
             // .fontSize(10)
             // .text('123 Main Street', 200, 65, { align: 'right' })
             // .text('New York, NY, 10025', 200, 80, { align: 'right' })
@@ -216,7 +216,7 @@ class Utils {
         doc.fontSize(
             10,
         ).text(
-            'Thank you for using SF-DART. If you have any questions, please contact support@hudsfdart.com',
+            'Thank you. If you have any questions, please contact luna@yongesolutions.com',
             50,
             780,
             { align: 'center', width: 500 },
