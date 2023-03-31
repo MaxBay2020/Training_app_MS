@@ -136,7 +136,7 @@ class TrainingController {
             if(userRole === UserRoleEnum.APPROVER){
                 subQueryWithFilteredTrainingStatus
                     .select()
-                    .where('training.trainingStatus <> :value', { value :TrainingStatusEnum.WITHDRAWN })
+                    .where('training.trainingStatus <> :value', { value :TrainingStatusEnum.CANCELED })
             }else{
                 subQueryWithFilteredTrainingStatus
                     .select()
@@ -225,7 +225,7 @@ class TrainingController {
 
             let trainingListFiltered = trainingList
             if(userRole === UserRoleEnum.APPROVER){
-                trainingListFiltered = trainingList.filter(item => item.training_trainingStatus !== TrainingStatusEnum.WITHDRAWN)
+                trainingListFiltered = trainingList.filter(item => item.training_trainingStatus !== TrainingStatusEnum.CANCELED)
             }
 
             const totalPage = Math.ceil(totalNumber / +limit)
@@ -524,7 +524,7 @@ class TrainingController {
             await dataSource
                 .createQueryBuilder()
                 .update(Training)
-                .set({trainingStatus: TrainingStatusEnum.WITHDRAWN})
+                .set({trainingStatus: TrainingStatusEnum.CANCELED})
                 .where('id = :trainingId', {trainingId})
                 .execute()
 

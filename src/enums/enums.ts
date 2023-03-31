@@ -1,8 +1,8 @@
 export enum TrainingStatusEnum {
     APPROVED = 'APPROVED',
     REJECTED = 'REJECTED',
-    PENDING = 'PENDING',
-    WITHDRAWN = 'WITHDRAWN',
+    SUBMITTED = 'SUBMITTED',
+    CANCELED = 'CANCELED',
 }
 
 
