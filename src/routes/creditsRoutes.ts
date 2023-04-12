@@ -7,6 +7,6 @@ const creditRouters = express.Router()
 creditRouters.get('/', validateUser, creditController.queryAllCredits)
 
 // get all credits ONLY on servicer master base
-creditRouters.get('/download-pdf', validateUser, creditController.downloadAllCredits)
+creditRouters.get('/download', validateUser, creditController.downloadAllCredits)
 
 export default creditRouters

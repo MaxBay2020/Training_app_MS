@@ -78,7 +78,7 @@ class TrainingController {
             return res.status(StatusCode.E200).send({
                 approvedTrainingCount,
                 totalApprovedTrainingCount,
-                scorePercentage
+                // scorePercentage
             })
         }catch (e) {
             console.log(e.message)
@@ -97,7 +97,7 @@ class TrainingController {
      * @param res
      */
     static queryAllTrainingTypes = async (req: ExpReq, res: ExpRes) => {
-        const allTrainingTypes = Object.values(TrainingTypeEnum)
+        const allTrainingTypes = Object.values(TrainingTypeEnum).filter(trainingType => trainingType !== TrainingTypeEnum.ECLASS)
         return res.status(StatusCode.E200).send(allTrainingTypes)
     }
 
