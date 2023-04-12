@@ -231,6 +231,79 @@ class TrainingController {
 
             const totalPage = Math.ceil(totalNumber / +limit)
 
+            subQueryWithFilteredTrainingStatus
+                .orderBy(`training_${sortByFieldName}`, sortByOrder)
+
+
+            if(searchKeyword){
+                if(userRole === UserRoleEnum.SERVICER){
+                    subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
+                        subQueryWithFilteredTrainingStatus,
+                        [
+                            'training.trainingName',
+                            'training.trainingType',
+                            'training.trainingStatus'
+                        ],
+                        searchKeyword as string)
+
+                }else if(userRole === UserRoleEnum.ADMIN){
+                    subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
+                        subQueryWithFilteredTrainingStatus,
+                        [
+                            'training.trainingName',
+                            'training.trainingType',
+                            'training.trainingStatus',
+                            'user.firstName',
+                            'user.lastName',
+                            'user.email',
+                            'sm.id',
+                            'sm.servicerMasterName'
+                        ],
+                        searchKeyword as string)
+                }else if(userRole === UserRoleEnum.APPROVER){
+                    subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
+                        subQueryWithFilteredTrainingStatus,
+                        [
+                            'training.trainingName',
+                            'training.trainingType',
+                            'training.trainingStatus',
+                            'user.firstName',
+                            'user.lastName',
+                            'user.email',
+                            'sm.id',
+                            'sm.servicerMasterName'
+                        ],
+                        searchKeyword as string)
+
+                }
+            }
+
+            const totalNumber: number = await subQueryWithFilteredTrainingStatus.getCount() as number
+
+            const trainingList = await trainingListQueryBuilder
+                .select()
+                .from(`(${subQueryWithFilteredTrainingStatus.getQuery()})`, 'subtable')
+                .setParameters(subQueryWithFilteredTrainingStatus.getParameters())
+                .skip(startIndex)
+                .take(+limit)
+                .getRawMany()
+
+            // take and skip may look like we are using limit and offset, but they aren't.
+            // limit and offset may not work as you expect once you have more complicated queries with joins or subqueries.
+            // Using take and skip will prevent those issues.
+            // const trainingList = await subQueryWithFilteredTrainingStatus
+            //     .offset(startIndex)
+            //     .limit(+limit)
+            //     .getRawMany()
+
+
+            let trainingListFiltered = trainingList
+            if(userRole === UserRoleEnum.APPROVER){
+                trainingListFiltered = trainingList.filter(item => item.training_trainingStatus !== TrainingStatusEnum.CANCELED)
+            }
+
+            const totalPage = Math.ceil(totalNumber / +limit)
+
             return res.status(StatusCode.E200).send({
                 userRole,
                 trainingList: Utils.formattedTrainingList(trainingListFiltered, userRole),
