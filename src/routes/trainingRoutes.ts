@@ -13,6 +13,8 @@ trainingRouters.get('/', validateUser, TrainingController.queryAllTrainings)
 // get all training type
 trainingRouters.get('/trainingTypes', validateUser, TrainingController.queryAllTrainingTypes)
 
+// query all eClass name
+trainingRouters.get('/eClass', validateUser, TrainingController.queryAllEClassName)
 
 // get training by trainingId
 trainingRouters.get('/:trainingId', validateUser, TrainingController.queryTrainingById)
@@ -29,10 +31,6 @@ trainingRouters.put('/:trainingId', validateUser, TrainingController.updateTrain
 
 // withdraw a training
 trainingRouters.delete('/:trainingId', validateUser, TrainingController.deleteTrainingById)
-
-
-
-
 
 
 export default trainingRouters
