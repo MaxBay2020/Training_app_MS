@@ -10,6 +10,7 @@ import {maxCredits} from "../utils/consts";
 import _ from "lodash";
 import ServicerMaster from "../entities/ServicerMaster";
 import PDFDocument from 'pdfkit'
+import * as XLSX from 'xlsx'
 
 class TrainingController {
     /**
@@ -200,20 +201,25 @@ class TrainingController {
 
     /**
      * download all credits ONLY on servicer master base
+     * NOTICE!
+     * 1 - download Excel
+     * 2 - download PDF
      * @param req
      * @param res
      */
     static downloadAllCredits = async (req: ExpReq, res: ExpRes) => {
 
-        const { sortBy=3 } = req.query
+        const { sortBy = 3 } = req.query
 
-        if(!sortBy){
+        if(!sortBy || !req.headers.filetype){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
                 info: error.info,
                 message: error.message
             })
         }
+
+        const fileType: number = +req.headers.filetype
 
         const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(+sortBy)
 
@@ -279,25 +285,61 @@ class TrainingController {
                 }
             })
 
+            if(fileType === 1){
+                // ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇ Download Excel Start ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇
+                const formattedTrainingListStatsBySmIdWithCredits = trainingListStatsBySmIdWithCredits.reduce((acc: any, cur) => {
+                    const {
+                        smId,
+                        smName,
+                        ECLASS,
+                        LiveTraining,
+                        Webinar,
+                        credits
+                    } = cur
+                    acc.push({
+                        'Servicer ID': smId,
+                        'Servicer Name': smName,
+                        '# Appd.EClass': ECLASS,
+                        '# Appd.Webinar': LiveTraining,
+                        '# Appd.LiveTraining': Webinar,
+                        '# Credits': credits
+                    })
+                    return acc
+                }, [])
+                const workbook = XLSX.utils.book_new()
+                const worksheet = XLSX.utils.json_to_sheet(formattedTrainingListStatsBySmIdWithCredits)
+                XLSX.utils.book_append_sheet(workbook, worksheet, "credits")
+                const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+                return res.status(StatusCode.E200).send(excelBuffer)
+                // ⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆ Download Excel End ⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆
+            }else if(fileType === 2){
+                // ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇ Download PDF Start ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇
+                const myDoc: PDFKit.PDFDocument = new PDFDocument({bufferPages: true});
+                const buffers:any = []
 
-            const myDoc: PDFKit.PDFDocument = new PDFDocument({bufferPages: true});
-            const buffers:any = []
+                myDoc.on('data', buffers.push.bind(buffers))
+                myDoc.on('end', () => {
+                    const pdfData = Buffer.concat(buffers);
+                    res.writeHead(200, {
+                        'Content-Length': Buffer.byteLength(pdfData),
+                        'Content-Type': 'application/pdf',
+                        'Content-disposition': 'attachment;filename=test.pdf',})
+                        .end(pdfData)
+                })
 
-            myDoc.on('data', buffers.push.bind(buffers))
-            myDoc.on('end', () => {
-                const pdfData = Buffer.concat(buffers);
-                res.writeHead(200, {
-                    'Content-Length': Buffer.byteLength(pdfData),
-                    'Content-Type': 'application/pdf',
-                    'Content-disposition': 'attachment;filename=test.pdf',})
-                    .end(pdfData)
-            })
-
-            Utils.generatePDFHeader(myDoc)
-            Utils.generatePDFTable(myDoc, trainingListStatsBySmIdWithCredits)
-            Utils.generatePDFFooter(myDoc)
-            myDoc.end();
-            return
+                Utils.generatePDFHeader(myDoc)
+                Utils.generatePDFTable(myDoc, trainingListStatsBySmIdWithCredits)
+                Utils.generatePDFFooter(myDoc)
+                myDoc.end()
+                return
+                // ⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆ Download PDF End ⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆
+            }else{
+                const error = new Error(null, StatusCode.E400, Message.ErrParams)
+                return res.status(error.statusCode).send({
+                    info: error.info,
+                    message: error.message
+                })
+            }
 
         }catch(e){
             console.log(e.message)
