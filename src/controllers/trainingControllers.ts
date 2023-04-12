@@ -10,6 +10,7 @@ import {In, Repository, SelectQueryBuilder} from "typeorm";
 import AppDataSource from "../data-source";
 import ServicerMaster from "../entities/ServicerMaster";
 import {maxCredits} from "../utils/consts";
+import EClass from "../entities/EClass";
 
 class TrainingController {
 
@@ -17,7 +18,7 @@ class TrainingController {
         const { userRole, email, servicerMasterId } = req.body
         if(userRole !== UserRoleEnum.SERVICER){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
-            return res.status(200).send({
+            return res.status(StatusCode.E200).send({
                 info: '',
                 message: error.message
             })
@@ -74,7 +75,7 @@ class TrainingController {
                 maximumFractionDigits: 2,
             }).format(Math.min(totalScores, maxCredits));
 
-            return res.status(200).send({
+            return res.status(StatusCode.E200).send({
                 approvedTrainingCount,
                 totalApprovedTrainingCount,
                 scorePercentage
@@ -97,7 +98,7 @@ class TrainingController {
      */
     static queryAllTrainingTypes = async (req: ExpReq, res: ExpRes) => {
         const allTrainingTypes = Object.values(TrainingTypeEnum)
-        return res.status(200).send(allTrainingTypes)
+        return res.status(StatusCode.E200).send(allTrainingTypes)
     }
 
 
@@ -230,7 +231,7 @@ class TrainingController {
 
             const totalPage = Math.ceil(totalNumber / +limit)
 
-            return res.status(200).send({
+            return res.status(StatusCode.E200).send({
                 userRole,
                 trainingList: Utils.formattedTrainingList(trainingListFiltered, userRole),
                 totalPage
@@ -292,7 +293,7 @@ class TrainingController {
                 })
             }
 
-            return res.status(200).send(training)
+            return res.status(StatusCode.E200).send(training)
         }catch(e){
             console.log(e.message)
             const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
@@ -356,6 +357,10 @@ class TrainingController {
 
             const { servicer: servicerMaster } = user
 
+            const trainingStatus =
+                trainingType === TrainingTypeEnum.LiveTraining || trainingType === TrainingTypeEnum.ECLASS ?
+                    TrainingStatusEnum.APPROVED : TrainingStatusEnum.SUBMITTED
+
             const newTraining: Training = Training.create({
                 trainingName,
                 trainingType,
@@ -364,6 +369,7 @@ class TrainingController {
                 hoursCount,
                 trainingURL,
                 user,
+                trainingStatus,
                 servicerMaster
             }) as Training
 
@@ -589,7 +595,32 @@ class TrainingController {
                 message: error.message
             })
         }
+    }
 
+    /**
+     * query all data from eClass table
+     * @param req
+     * @param res
+     */
+    static queryAllEClassName = async (req: ExpReq, res: ExpRes) => {
+        try{
+            const eClassNameList = await dataSource
+                .getRepository(EClass)
+                .createQueryBuilder('eClass')
+                .select(['eClass.eClassName'])
+                .getMany()
+
+            return res.status(StatusCode.E200).send({
+                eClassNameList: eClassNameList.map(eClassName => eClassName.eClassName)
+            })
+        }catch (e) {
+            console.log(e.message)
+            const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
+        }
     }
 }
 
