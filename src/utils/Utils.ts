@@ -5,6 +5,8 @@ import {trainingScore, TrainingTypeEnum, UserRoleEnum} from "../enums/enums";
 import moment from "moment";
 import {eClassModuleCount, logoUrl} from "./consts";
 import PDFDocument = PDFKit.PDFDocument;
+import AppDataSource from "../data-source";
+import User from "../entities/User";
 
 class Utils {
      static queryAllRecordsInTable<T, Entity>(identifiers: T[], tableName: ObjectType<Entity>, primaryKeyColumnName: string) :Promise<Entity[]> {
@@ -67,8 +69,8 @@ class Utils {
     }
 
 
-    static formattedTrainingList = (originalTrainingList: any[], userRole: string): {} => {
-        if(userRole === UserRoleEnum.SERVICER){
+    static formattedTrainingList = (originalTrainingList: any[], userRoles: string[]): {} => {
+        if(userRoles.includes(UserRoleEnum.SERVICER)){
             return originalTrainingList.map(item => {
                 const {
                     training_id,
@@ -91,7 +93,7 @@ class Utils {
                     trainingURL: training_trainingURL
                 }
             })
-        }else if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
+        }else if(userRoles.includes(UserRoleEnum.ADMIN) || userRoles.includes(UserRoleEnum.APPROVER)){
             return originalTrainingList.map(item => {
                 const {
                     user_email,
@@ -294,6 +296,21 @@ class Utils {
             .moveTo(startX, y)
             .lineTo(endX, y)
             .stroke();
+    }
+
+
+    /**
+     * query user roles by user email
+     * @param email
+     */
+    static getUserRoles = async (email: string): Promise<string[]> => {
+        const user = await AppDataSource
+            .getRepository(User)
+            .createQueryBuilder('user')
+            .innerJoinAndSelect('user.userRoles', 'userRole')
+            .where('email = :email', { email })
+            .getOne() as User
+        return user.userRoles.map(userRole => userRole.userRoleName)
     }
 }
 

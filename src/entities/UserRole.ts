@@ -5,7 +5,7 @@ import
     Column,
     CreateDateColumn,
     UpdateDateColumn,
-    PrimaryGeneratedColumn, OneToMany, PrimaryColumn
+    PrimaryGeneratedColumn, OneToMany, PrimaryColumn, ManyToMany, JoinTable
 }
     from 'typeorm'
 import User from "./User";
@@ -13,7 +13,7 @@ import BaseClass from "./BaseClass";
 import {UserRoleEnum} from "../enums/enums";
 
 
-@Entity('user role')
+@Entity('user_role')
 class UserRole extends BaseClass {
     @PrimaryGeneratedColumn('increment')
     id: string
@@ -24,7 +24,8 @@ class UserRole extends BaseClass {
     })
     userRoleName: UserRoleEnum
 
-    @OneToMany(() => User, user => user.userRole)
+    @ManyToMany(() => User, user => user.userRoles)
+    @JoinTable()
     users: User[]
 }
 
