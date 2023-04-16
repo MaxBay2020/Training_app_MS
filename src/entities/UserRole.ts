@@ -13,7 +13,7 @@ import BaseClass from "./BaseClass";
 import {UserRoleEnum} from "../enums/enums";
 
 
-@Entity('user role')
+@Entity('user_role')
 class UserRole extends BaseClass {
     @PrimaryGeneratedColumn('increment')
     id: string

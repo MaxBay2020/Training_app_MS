@@ -111,6 +111,8 @@ class TrainingController {
 
         const { searchKeyword, sortBy, page, limit } = req.query
 
+        const { servicerMasterId } = req.body
+
         if(!sortBy || !page || !limit){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
@@ -143,17 +145,22 @@ class TrainingController {
                     .select()
             }
 
+            subQueryWithFilteredTrainingStatus
+                .innerJoinAndSelect('training.user', 'user')
+
             if(userRole === UserRoleEnum.SERVICER){
                 subQueryWithFilteredTrainingStatus
-                    .innerJoinAndSelect('training.user', 'user')
                     .where('user.email = :email', { email })
             }
 
-
+            if(userRole === UserRoleEnum.SERVICER_COORDINATOR){
+                subQueryWithFilteredTrainingStatus
+                    .innerJoinAndSelect('user.servicer', 'sm')
+                    .where('sm.id = :servicerMasterId', { servicerMasterId })
+            }
 
             if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
                 subQueryWithFilteredTrainingStatus
-                    .innerJoinAndSelect('training.user', 'user')
                     .innerJoinAndSelect('user.servicer', 'sm')
             }
 

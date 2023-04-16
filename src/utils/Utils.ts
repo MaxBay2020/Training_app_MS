@@ -68,7 +68,7 @@ class Utils {
 
 
     static formattedTrainingList = (originalTrainingList: any[], userRole: string): {} => {
-        if(userRole === UserRoleEnum.SERVICER){
+        if(userRole === UserRoleEnum.SERVICER || userRole === UserRoleEnum.SERVICER_COORDINATOR){
             return originalTrainingList.map(item => {
                 const {
                     training_id,
