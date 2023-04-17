@@ -473,7 +473,7 @@ class TrainingController {
                     .createQueryBuilder('training')
                     .innerJoinAndSelect('training.user', 'user')
                     .where('training.id = :trainingId', { trainingId })
-                    .andWhere('user.email = :email', { email })
+                    // .andWhere('user.email = :email', { email })
                     .getRawOne(),
                 dataSource.getRepository(User).findOneBy( { email } )
             ])
@@ -548,7 +548,7 @@ class TrainingController {
                     .createQueryBuilder('training')
                     .innerJoinAndSelect('training.user', 'user')
                     .where('training.id = :trainingId', { trainingId })
-                    .andWhere('user.email = :email', { email })
+                    // .andWhere('user.email = :email', { email })
                     .getRawOne(),
                 dataSource.getRepository(User).findOneBy( { email } )
             ])
