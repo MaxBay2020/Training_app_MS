@@ -180,6 +180,16 @@ class TrainingController {
                         ],
                         searchKeyword as string)
 
+                }else if(userRole === UserRoleEnum.SERVICER_COORDINATOR){
+                    subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
+                        subQueryWithFilteredTrainingStatus,
+                        [
+                            'training.trainingName',
+                            'training.trainingType',
+                            'training.trainingStatus',
+                            'training.trainee'
+                        ],
+                        searchKeyword as string)
                 }else if(userRole === UserRoleEnum.ADMIN){
                     subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
                         subQueryWithFilteredTrainingStatus,
@@ -187,6 +197,7 @@ class TrainingController {
                             'training.trainingName',
                             'training.trainingType',
                             'training.trainingStatus',
+                            'training.trainee',
                             'user.firstName',
                             'user.lastName',
                             'user.email',
@@ -201,6 +212,7 @@ class TrainingController {
                             'training.trainingName',
                             'training.trainingType',
                             'training.trainingStatus',
+                            'training.trainee',
                             'user.firstName',
                             'user.lastName',
                             'user.email',

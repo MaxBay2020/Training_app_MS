@@ -78,7 +78,8 @@ class Utils {
                     training_hoursCount,
                     training_startDate,
                     training_endDate,
-                    training_trainingURL
+                    training_trainingURL,
+                    training_trainee
                 } = item
                 return {
                     id: training_id,
@@ -88,7 +89,8 @@ class Utils {
                     hoursCount: training_hoursCount,
                     startDate: training_startDate,
                     endDate: training_endDate,
-                    trainingURL: training_trainingURL
+                    trainingURL: training_trainingURL,
+                    trainee: training_trainee
                 }
             })
         }else if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
@@ -109,7 +111,7 @@ class Utils {
                     training_startDate,
                     training_endDate,
                     training_trainingURL,
-
+                    training_trainee
                 } = item
 
                 return {
@@ -127,7 +129,8 @@ class Utils {
                     hoursCount: training_hoursCount,
                     startDate: training_startDate,
                     endDate: training_endDate,
-                    trainingURL: training_trainingURL
+                    trainingURL: training_trainingURL,
+                    trainee: training_trainee
 
                 }
             })
