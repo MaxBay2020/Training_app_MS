@@ -54,6 +54,9 @@ class User extends BaseClass {
     @OneToMany(() => Training, training => training.operatedBy)
     operatedTrainings: Training[]
 
+    @OneToMany(() => Training, training => training.updatedBy)
+    updatedTrainings: Training[]
+
 }
 
 export default User

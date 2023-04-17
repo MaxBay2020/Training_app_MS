@@ -389,7 +389,9 @@ class TrainingController {
                 trainingURL,
                 user,
                 trainingStatus,
-                servicerMaster
+                servicerMaster,
+                updatedBy: user,
+                trainee: user
             }) as Training
 
             const errors = await validate(newTraining)
@@ -466,12 +468,15 @@ class TrainingController {
         }
 
         try{
-            const training: Training =  await dataSource.getRepository(Training)
-                .createQueryBuilder('training')
-                .innerJoinAndSelect('training.user', 'user')
-                .where('training.id = :trainingId', { trainingId })
-                .andWhere('user.email = :email', { email })
-                .getRawOne() as Training
+            const [training, updatedBy] = await Promise.all([
+                dataSource.getRepository(Training)
+                    .createQueryBuilder('training')
+                    .innerJoinAndSelect('training.user', 'user')
+                    .where('training.id = :trainingId', { trainingId })
+                    .andWhere('user.email = :email', { email })
+                    .getRawOne(),
+                dataSource.getRepository(User).findOneBy( { email } )
+            ])
 
 
             if(!training){
@@ -482,10 +487,18 @@ class TrainingController {
                 })
             }
 
+            if(training.training_trainingStatus !== TrainingStatusEnum.SUBMITTED){
+                const error = new Error(null, StatusCode.E405, Message.RefreshPage)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
             await dataSource
                 .createQueryBuilder()
                 .update(Training)
-                .set({trainingName, trainingType, startDate, endDate, hoursCount, trainingURL})
+                .set({trainingName, trainingType, startDate, endDate, hoursCount, trainingURL, updatedBy})
                 .where('id = :trainingId', {trainingId})
                 .execute()
 
@@ -530,12 +543,15 @@ class TrainingController {
         }
 
         try{
-            const training: Training =  await dataSource.getRepository(Training)
-                .createQueryBuilder('training')
-                .innerJoinAndSelect('training.user', 'user')
-                .where('training.id = :trainingId', { trainingId })
-                .andWhere('user.email = :email', { email })
-                .getRawOne() as Training
+            const [training, updatedBy] = await Promise.all([
+                dataSource.getRepository(Training)
+                    .createQueryBuilder('training')
+                    .innerJoinAndSelect('training.user', 'user')
+                    .where('training.id = :trainingId', { trainingId })
+                    .andWhere('user.email = :email', { email })
+                    .getRawOne(),
+                dataSource.getRepository(User).findOneBy( { email } )
+            ])
 
 
             if(!training){
@@ -546,10 +562,18 @@ class TrainingController {
                 })
             }
 
+            if(training.training_trainingStatus !== TrainingStatusEnum.SUBMITTED){
+                const error = new Error(null, StatusCode.E405, Message.RefreshPage)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
             await dataSource
                 .createQueryBuilder()
                 .update(Training)
-                .set({trainingStatus: TrainingStatusEnum.CANCELED})
+                .set({trainingStatus: TrainingStatusEnum.CANCELED, updatedBy})
                 .where('id = :trainingId', {trainingId})
                 .execute()
 

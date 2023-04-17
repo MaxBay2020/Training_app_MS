@@ -36,6 +36,9 @@ class Training extends BaseClass {
     @ManyToOne(()=>ServicerMaster, servicerMaster => servicerMaster.trainings)
     servicerMaster: ServicerMaster
 
+    @ManyToOne(()=>User, user => user.updatedTrainings)
+    updatedBy: User
+
     @ManyToOne(()=>User, user => user.operatedTrainings)
     operatedBy: User
 
