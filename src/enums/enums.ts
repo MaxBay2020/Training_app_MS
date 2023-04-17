@@ -11,7 +11,6 @@ export enum UserRoleEnum {
     APPROVER = 'APPROVER',
     SERVICER = 'SERVICER',
     SERVICER_COORDINATOR = 'SERVICER COORDINATOR',
-    TRAINEE = 'TRAINEE',
 }
 
 export enum TrainingTypeEnum {
