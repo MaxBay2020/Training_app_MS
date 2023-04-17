@@ -68,7 +68,7 @@ class Utils {
 
 
     static formattedTrainingList = (originalTrainingList: any[], userRole: string): {} => {
-        if(userRole === UserRoleEnum.SERVICER || userRole === UserRoleEnum.SERVICER_COORDINATOR){
+        if(userRole === UserRoleEnum.SERVICER){
             return originalTrainingList.map(item => {
                 const {
                     training_id,
@@ -79,7 +79,6 @@ class Utils {
                     training_startDate,
                     training_endDate,
                     training_trainingURL,
-                    training_trainee
                 } = item
                 return {
                     id: training_id,
@@ -90,10 +89,40 @@ class Utils {
                     startDate: training_startDate,
                     endDate: training_endDate,
                     trainingURL: training_trainingURL,
-                    trainee: training_trainee
                 }
             })
-        }else if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
+        }else if(userRole === UserRoleEnum.SERVICER_COORDINATOR){
+            return originalTrainingList.map(item => {
+                const {
+                    training_id,
+                    training_trainingName,
+                    training_trainingType,
+                    training_trainingStatus,
+                    training_hoursCount,
+                    training_startDate,
+                    training_endDate,
+                    training_trainingURL,
+
+                    user_email,
+                    user_firstName,
+                    user_lastName,
+                } = item
+                return {
+                    id: training_id,
+                    trainingName: training_trainingName,
+                    trainingType: training_trainingType,
+                    trainingStatus: training_trainingStatus,
+                    hoursCount: training_hoursCount,
+                    startDate: training_startDate,
+                    endDate: training_endDate,
+                    trainingURL: training_trainingURL,
+
+                    userEmail: user_email,
+                    userFirstName: user_firstName,
+                    userLastName: user_lastName,
+                }
+            })
+        } else if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
             return originalTrainingList.map(item => {
                 const {
                     user_email,
@@ -111,7 +140,6 @@ class Utils {
                     training_startDate,
                     training_endDate,
                     training_trainingURL,
-                    training_trainee
                 } = item
 
                 return {
@@ -130,7 +158,6 @@ class Utils {
                     startDate: training_startDate,
                     endDate: training_endDate,
                     trainingURL: training_trainingURL,
-                    trainee: training_trainee
 
                 }
             })

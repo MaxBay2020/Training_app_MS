@@ -187,7 +187,9 @@ class TrainingController {
                             'training.trainingName',
                             'training.trainingType',
                             'training.trainingStatus',
-                            'training.trainee'
+                            'user.firstName',
+                            'user.lastName',
+                            'user.email',
                         ],
                         searchKeyword as string)
                 }else if(userRole === UserRoleEnum.ADMIN){
@@ -197,7 +199,6 @@ class TrainingController {
                             'training.trainingName',
                             'training.trainingType',
                             'training.trainingStatus',
-                            'training.trainee',
                             'user.firstName',
                             'user.lastName',
                             'user.email',
@@ -212,7 +213,6 @@ class TrainingController {
                             'training.trainingName',
                             'training.trainingType',
                             'training.trainingStatus',
-                            'training.trainee',
                             'user.firstName',
                             'user.lastName',
                             'user.email',

@@ -30,8 +30,8 @@ class Training extends BaseClass {
     @ManyToOne(()=>User, user => user.trainings)
     user: User
 
-    @Column()
-    trainee: string
+    @ManyToOne(()=>User, user => user.trainings)
+    trainee: User
 
     @ManyToOne(()=>ServicerMaster, servicerMaster => servicerMaster.trainings)
     servicerMaster: ServicerMaster
