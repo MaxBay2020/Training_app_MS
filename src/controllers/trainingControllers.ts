@@ -419,6 +419,7 @@ class TrainingController {
                         .getRepository(User)
                         .createQueryBuilder('user')
                         .where('user.email = :traineeEmail', { traineeEmail })
+                        .andWhere('user.servicer = :servicer', { servicer: user.servicer })
                         .getOne()
                 }))
 
@@ -434,7 +435,8 @@ class TrainingController {
                         const traineeUser: User = User.create({
                             email: traineeEmail,
                             firstName: traineeFirstName,
-                            lastName: traineeLastName
+                            lastName: traineeLastName,
+                            servicer: user.servicer
                         })
                         userToBeRegistered.push(traineeUser)
                         return validate(traineeUser)
