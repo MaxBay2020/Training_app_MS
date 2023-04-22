@@ -418,10 +418,13 @@ class TrainingController {
                     return dataSource
                         .getRepository(User)
                         .createQueryBuilder('user')
+                        .innerJoinAndSelect('user.servicer', 'sm')
                         .where('user.email = :traineeEmail', { traineeEmail })
-                        .andWhere('user.servicer = :servicer', { servicer: user.servicer })
+                        .andWhere('sm.id = :servicerId', { servicerId: user.servicer.id })
                         .getOne()
                 }))
+
+                console.log(userList)
 
                 userList = userList.filter((user: User) => user)
 
