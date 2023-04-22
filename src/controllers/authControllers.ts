@@ -7,13 +7,8 @@ import {access_token_expiresIn, saltRounds} from "../utils/consts";
 import {validate} from "class-validator"
 import bcrypt from 'bcrypt'
 import dataSource from "../data-source";
+import {UserWithDetails} from "../utils/dataType";
 
-
-type UserWithDetails = User &  {
-    userName: string,
-    servicerId: string,
-    servicerMasterName: string,
-}
 
 class AuthControllers {
     static loginUser = async (req: ExpReq, res: ExpRes) => {
@@ -75,9 +70,10 @@ class AuthControllers {
             })
 
             const { userName, userRole, servicerId, servicerMasterName } = user
-            return res.status(200).send({
+            return res.status(StatusCode.E200).send({
                 accessToken: token,
                 userName,
+                userEmail: email,
                 userRole,
                 servicerId,
                 servicerMasterName
