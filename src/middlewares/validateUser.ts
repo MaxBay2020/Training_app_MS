@@ -3,6 +3,7 @@ import User from "../entities/User"
 import dataSource from "../data-source"
 import Error, {Message, StatusCode} from "../enums/Error";
 import jwt from "jsonwebtoken"
+import Utils from "../utils/Utils";
 
 export const validateUser = async (req: ExpReq, res: ExpRes, next: NextFunction) => {
 
@@ -33,12 +34,13 @@ export const validateUser = async (req: ExpReq, res: ExpRes, next: NextFunction)
             const userFound: User = await dataSource
                 .getRepository(User)
                 .createQueryBuilder('user')
-                .innerJoinAndSelect('user.userRole', 'userRole')
+                .innerJoinAndSelect('user.userRoles', 'userRole')
                 .leftJoinAndSelect('user.servicer', 'servicerMaster')
                 .where('user.email = :email', { email })
                 .select(['userRole.userRoleName AS userRole', 'servicerMaster.id AS servicer'])
                 .getRawOne() as User
 
+            const userRoles = await Utils.getUserRoles(email)
 
             if (!userFound) {
                 const error = new Error(null, StatusCode.E404, Message.ErrFind)
@@ -48,7 +50,7 @@ export const validateUser = async (req: ExpReq, res: ExpRes, next: NextFunction)
                 })
             }
 
-            req.body.userRole = userFound.userRole
+            req.body.userRoles = userRoles
             req.body.email = email
             req.body.servicerMasterId = userFound.servicer
 
