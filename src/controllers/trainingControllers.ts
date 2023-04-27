@@ -161,7 +161,7 @@ class TrainingController {
                     .where('sm.id = :servicerMasterId', { servicerMasterId })
             }
 
-            if(userRoles.includes(UserRoleEnum.ADMIN) || userRoles.includes(UserRoleEnum.APPROVER)){
+            if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
                 subQueryWithFilteredTrainingStatus
                     .innerJoinAndSelect('user.servicer', 'sm')
             }
