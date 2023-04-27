@@ -343,7 +343,7 @@ class TrainingController {
             traineeList
         } = req.body
 
-        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate){
+        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate || endDate > new Date()){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
                 info: error.info,
@@ -423,8 +423,6 @@ class TrainingController {
                         .andWhere('sm.id = :servicerId', { servicerId: user.servicer.id })
                         .getOne()
                 }))
-
-                console.log(userList)
 
                 userList = userList.filter((user: User) => user)
 
