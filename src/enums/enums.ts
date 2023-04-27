@@ -10,7 +10,7 @@ export enum UserRoleEnum {
     ADMIN = 'ADMIN',
     APPROVER = 'APPROVER',
     SERVICER = 'SERVICER',
-    SERVICER_COORDINATOR = 'SERVICER COORDINATOR'
+    SERVICER_COORDINATOR = 'SERVICER COORDINATOR',
 }
 
 export enum TrainingTypeEnum {

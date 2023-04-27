@@ -6,6 +6,7 @@ import cors from "cors";
 import authRouters from "./routes/authRoutes"
 import dotenv from 'dotenv'
 import creditRouters from "./routes/creditsRoutes";
+import {validateUser} from "./middlewares/validateUser";
 
 const startServer = async () => {
     const app: Express = express()

@@ -27,7 +27,9 @@ class User extends BaseClass {
     @IsEmail()
     email: string
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     password: string
 
     @Column()
@@ -51,6 +53,9 @@ class User extends BaseClass {
 
     @OneToMany(() => Training, training => training.operatedBy)
     operatedTrainings: Training[]
+
+    @OneToMany(() => Training, training => training.updatedBy)
+    updatedTrainings: Training[]
 
 }
 

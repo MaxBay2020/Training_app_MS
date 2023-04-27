@@ -30,8 +30,14 @@ class Training extends BaseClass {
     @ManyToOne(()=>User, user => user.trainings)
     user: User
 
+    @ManyToOne(()=>User, user => user.trainings)
+    trainee: User
+
     @ManyToOne(()=>ServicerMaster, servicerMaster => servicerMaster.trainings)
     servicerMaster: ServicerMaster
+
+    @ManyToOne(()=>User, user => user.updatedTrainings)
+    updatedBy: User
 
     @ManyToOne(()=>User, user => user.operatedTrainings)
     operatedBy: User

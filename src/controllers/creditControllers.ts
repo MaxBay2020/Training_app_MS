@@ -147,7 +147,7 @@ class TrainingController {
                     .getRepository(Training)
                     .createQueryBuilder('training')
                     .innerJoinAndSelect('training.servicerMaster', 'sm')
-                    .innerJoinAndSelect('training.user', 'user')
+                    .innerJoinAndSelect('training.trainee', 'user')
                     .select([
                         'sm.id AS smId',
                         'training.trainingType AS trainingType',
