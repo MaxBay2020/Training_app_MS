@@ -80,7 +80,7 @@ class Utils {
                     training_hoursCount,
                     training_startDate,
                     training_endDate,
-                    training_trainingURL
+                    training_trainingURL,
                 } = item
                 return {
                     id: training_id,
@@ -90,10 +90,41 @@ class Utils {
                     hoursCount: training_hoursCount,
                     startDate: training_startDate,
                     endDate: training_endDate,
-                    trainingURL: training_trainingURL
+                    trainingURL: training_trainingURL,
                 }
             })
-        }else if(userRoles.includes(UserRoleEnum.ADMIN) || userRoles.includes(UserRoleEnum.APPROVER)){
+        }else if(userRole === UserRoleEnum.SERVICER_COORDINATOR){
+            return originalTrainingList.map(item => {
+                const {
+                    training_id,
+                    training_trainingName,
+                    training_trainingType,
+                    training_trainingStatus,
+                    training_hoursCount,
+                    training_startDate,
+                    training_endDate,
+                    training_trainingURL,
+
+                    user_email,
+                    user_firstName,
+                    user_lastName,
+                } = item
+                return {
+                    id: training_id,
+                    trainingName: training_trainingName,
+                    trainingType: training_trainingType,
+                    trainingStatus: training_trainingStatus,
+                    hoursCount: training_hoursCount,
+                    startDate: training_startDate,
+                    endDate: training_endDate,
+                    trainingURL: training_trainingURL,
+
+                    userEmail: user_email,
+                    userFirstName: user_firstName,
+                    userLastName: user_lastName,
+                }
+            })
+        } else if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
             return originalTrainingList.map(item => {
                 const {
                     user_email,
@@ -111,7 +142,6 @@ class Utils {
                     training_startDate,
                     training_endDate,
                     training_trainingURL,
-
                 } = item
 
                 return {
@@ -129,7 +159,7 @@ class Utils {
                     hoursCount: training_hoursCount,
                     startDate: training_startDate,
                     endDate: training_endDate,
-                    trainingURL: training_trainingURL
+                    trainingURL: training_trainingURL,
 
                 }
             })

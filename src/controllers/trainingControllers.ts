@@ -11,6 +11,8 @@ import AppDataSource from "../data-source";
 import ServicerMaster from "../entities/ServicerMaster";
 import {maxCredits} from "../utils/consts";
 import EClass from "../entities/EClass";
+import {Trainee} from "../utils/dataType";
+
 
 class TrainingController {
 
@@ -30,7 +32,7 @@ class TrainingController {
             const approvedTrainingCount: number = await AppDataSource
                 .getRepository(Training)
                 .createQueryBuilder('training')
-                .innerJoinAndSelect('training.user', 'user', 'user.email = :email', { email })
+                .innerJoinAndSelect('training.trainee', 'user', 'user.email = :email', { email })
                 .where('training.trainingStatus = :trainingStatus', { trainingStatus: TrainingStatusEnum.APPROVED })
                 .andWhere(':currentFiscalStartTime < training.startDate < :currentFiscalEndTime', {
                     currentFiscalStartTime,
@@ -111,6 +113,8 @@ class TrainingController {
 
         const { searchKeyword, sortBy, page, limit } = req.query
 
+        const { servicerMasterId } = req.body
+
         if(!sortBy || !page || !limit){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
@@ -143,17 +147,22 @@ class TrainingController {
                     .select()
             }
 
-            if(userRoles.includes(UserRoleEnum.SERVICER)){
+            subQueryWithFilteredTrainingStatus
+                .innerJoinAndSelect('training.trainee', 'user')
+
+            if(userRole === UserRoleEnum.SERVICER){
                 subQueryWithFilteredTrainingStatus
-                    .innerJoinAndSelect('training.user', 'user')
                     .where('user.email = :email', { email })
             }
 
-
+            if(userRole === UserRoleEnum.SERVICER_COORDINATOR){
+                subQueryWithFilteredTrainingStatus
+                    .innerJoinAndSelect('user.servicer', 'sm')
+                    .where('sm.id = :servicerMasterId', { servicerMasterId })
+            }
 
             if(userRoles.includes(UserRoleEnum.ADMIN) || userRoles.includes(UserRoleEnum.APPROVER)){
                 subQueryWithFilteredTrainingStatus
-                    .innerJoinAndSelect('training.user', 'user')
                     .innerJoinAndSelect('user.servicer', 'sm')
             }
 
@@ -173,7 +182,19 @@ class TrainingController {
                         ],
                         searchKeyword as string)
 
-                }else if(userRoles.includes(UserRoleEnum.ADMIN)){
+                }else if(userRole === UserRoleEnum.SERVICER_COORDINATOR){
+                    subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
+                        subQueryWithFilteredTrainingStatus,
+                        [
+                            'training.trainingName',
+                            'training.trainingType',
+                            'training.trainingStatus',
+                            'user.firstName',
+                            'user.lastName',
+                            'user.email',
+                        ],
+                        searchKeyword as string)
+                }else if(userRole === UserRoleEnum.ADMIN){
                     subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
                         subQueryWithFilteredTrainingStatus,
                         [
@@ -313,15 +334,16 @@ class TrainingController {
         const {
             trainingName,
             email,
+            userRole,
             trainingType,
             startDate,
             endDate,
             hoursCount,
             trainingURL,
-            userRoles
+            traineeList
         } = req.body
 
-        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate){
+        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate || endDate > new Date()){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
                 info: error.info,
@@ -346,7 +368,7 @@ class TrainingController {
             }
 
 
-            if(!userRoles.includes(UserRoleEnum.SERVICER)){
+            if(userRole !== UserRoleEnum.SERVICER && userRole !== UserRoleEnum.SERVICER_COORDINATOR){
                 const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
                 return res.status(error.statusCode).send({
                     info: '',
@@ -360,29 +382,116 @@ class TrainingController {
                 trainingType === TrainingTypeEnum.LiveTraining || trainingType === TrainingTypeEnum.ECLASS ?
                     TrainingStatusEnum.APPROVED : TrainingStatusEnum.SUBMITTED
 
-            const newTraining: Training = Training.create({
-                trainingName,
-                trainingType,
-                startDate,
-                endDate,
-                hoursCount,
-                trainingURL,
-                user,
-                trainingStatus,
-                servicerMaster
-            }) as Training
+            if(userRole === UserRoleEnum.SERVICER){
+                const newTraining: Training = Training.create({
+                    trainingName,
+                    trainingType,
+                    startDate,
+                    endDate,
+                    hoursCount,
+                    trainingURL,
+                    user,
+                    trainingStatus,
+                    servicerMaster,
+                    updatedBy: user,
+                    trainee: user
+                }) as Training
 
-            const errors = await validate(newTraining)
-            if(errors.length > 0){
-                console.log(errors)
-                const error = new Error(null, StatusCode.E400, Message.ErrParams)
-                return res.status(error.statusCode).send({
-                    info: '',
-                    message: error.message
-                })
+                const errors = await validate(newTraining)
+                if(errors.length > 0){
+                    console.log(errors)
+                    const error = new Error(null, StatusCode.E400, Message.ErrParams)
+                    return res.status(error.statusCode).send({
+                        info: '',
+                        message: error.message
+                    })
+                }
+
+                await newTraining.save()
             }
 
-            await newTraining.save()
+            if(userRole === UserRoleEnum.SERVICER_COORDINATOR){
+                let userList: User[] = await Promise.all(traineeList.map((item: Trainee) => {
+                    const { traineeEmail } = item
+
+                    return dataSource
+                        .getRepository(User)
+                        .createQueryBuilder('user')
+                        .innerJoinAndSelect('user.servicer', 'sm')
+                        .where('user.email = :traineeEmail', { traineeEmail })
+                        .andWhere('sm.id = :servicerId', { servicerId: user.servicer.id })
+                        .getOne()
+                }))
+
+                userList = userList.filter((user: User) => user)
+
+                if(userList.length !== traineeList.length){
+                    // if there are some users NOT exist in db
+                    const userEmailList = userList.map((trainee: User) => trainee.email)
+                    const traineeListToBeSaved = traineeList.filter((trainee: Trainee) => !userEmailList.includes(trainee.traineeEmail))
+                    const userToBeRegistered: User[] = []
+                    const validateErrors = await Promise.all(traineeListToBeSaved.map((traineeToBeSaved: Trainee) => {
+                        const { traineeEmail, traineeFirstName, traineeLastName } = traineeToBeSaved
+                        const traineeUser: User = User.create({
+                            email: traineeEmail,
+                            firstName: traineeFirstName,
+                            lastName: traineeLastName,
+                            servicer: user.servicer
+                        })
+                        userToBeRegistered.push(traineeUser)
+                        return validate(traineeUser)
+                    }))
+
+                    if(validateErrors.flat().length > 0){
+                        console.log(validateErrors)
+                        const error = new Error(null, StatusCode.E400, Message.ErrParams)
+                        return res.status(error.statusCode).send({
+                            info: '',
+                            message: error.message
+                        })
+                    }
+                    userList.push(...userToBeRegistered)
+
+                    // save users in db
+                    await dataSource
+                        .createQueryBuilder()
+                        .insert()
+                        .into(User)
+                        .values(userToBeRegistered)
+                        .execute()
+                }
+
+                // TODO: save trainings for these trainees
+                await Promise.all(userList.map(async (trainee: User) => {
+                    const newTraining: Training = Training.create({
+                        trainingName,
+                        trainingType,
+                        startDate,
+                        endDate,
+                        hoursCount,
+                        trainingURL,
+                        user,
+                        trainingStatus,
+                        servicerMaster,
+                        updatedBy: user,
+                        trainee
+                    }) as Training
+
+                    const errors = await validate(newTraining)
+                    if(errors.length > 0){
+                        console.log(errors)
+                        const error = new Error(null, StatusCode.E400, Message.ErrParams)
+                        return res.status(error.statusCode).send({
+                            info: '',
+                            message: error.message
+                        })
+                    }
+
+                    return newTraining.save()
+                }))
+            }
+
+
             return res.status(StatusCode.E200).send({
                 info: '',
                 message: Message.OK
@@ -446,12 +555,15 @@ class TrainingController {
         }
 
         try{
-            const training: Training =  await dataSource.getRepository(Training)
-                .createQueryBuilder('training')
-                .innerJoinAndSelect('training.user', 'user')
-                .where('training.id = :trainingId', { trainingId })
-                .andWhere('user.email = :email', { email })
-                .getRawOne() as Training
+            const [training, updatedBy] = await Promise.all([
+                dataSource.getRepository(Training)
+                    .createQueryBuilder('training')
+                    .innerJoinAndSelect('training.trainee', 'user')
+                    .where('training.id = :trainingId', { trainingId })
+                    // .andWhere('user.email = :email', { email })
+                    .getRawOne(),
+                dataSource.getRepository(User).findOneBy( { email } )
+            ])
 
 
             if(!training){
@@ -462,10 +574,18 @@ class TrainingController {
                 })
             }
 
+            if(training.training_trainingStatus !== TrainingStatusEnum.SUBMITTED){
+                const error = new Error(null, StatusCode.E405, Message.RefreshPage)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
             await dataSource
                 .createQueryBuilder()
                 .update(Training)
-                .set({trainingName, trainingType, startDate, endDate, hoursCount, trainingURL})
+                .set({trainingName, trainingType, startDate, endDate, hoursCount, trainingURL, updatedBy})
                 .where('id = :trainingId', {trainingId})
                 .execute()
 
@@ -511,12 +631,15 @@ class TrainingController {
         }
 
         try{
-            const training: Training =  await dataSource.getRepository(Training)
-                .createQueryBuilder('training')
-                .innerJoinAndSelect('training.user', 'user')
-                .where('training.id = :trainingId', { trainingId })
-                .andWhere('user.email = :email', { email })
-                .getRawOne() as Training
+            const [training, updatedBy] = await Promise.all([
+                dataSource.getRepository(Training)
+                    .createQueryBuilder('training')
+                    .innerJoinAndSelect('training.trainee', 'user')
+                    .where('training.id = :trainingId', { trainingId })
+                    // .andWhere('user.email = :email', { email })
+                    .getRawOne(),
+                dataSource.getRepository(User).findOneBy( { email } )
+            ])
 
 
             if(!training){
@@ -527,10 +650,18 @@ class TrainingController {
                 })
             }
 
+            if(training.training_trainingStatus !== TrainingStatusEnum.SUBMITTED){
+                const error = new Error(null, StatusCode.E405, Message.RefreshPage)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
             await dataSource
                 .createQueryBuilder()
                 .update(Training)
-                .set({trainingStatus: TrainingStatusEnum.CANCELED})
+                .set({trainingStatus: TrainingStatusEnum.CANCELED, updatedBy})
                 .where('id = :trainingId', {trainingId})
                 .execute()
 
