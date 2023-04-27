@@ -17,8 +17,8 @@ import {Trainee} from "../utils/dataType";
 class TrainingController {
 
     static queryAllTrainingCredits = async (req: ExpReq, res: ExpRes) => {
-        const { userRoles, email, servicerMasterId } = req.body
-        if(!userRoles.includes(UserRoleEnum.SERVICER)){
+        const { userRole, email, servicerMasterId } = req.body
+        if(userRole !== UserRoleEnum.SERVICER){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
             return res.status(StatusCode.E200).send({
                 info: '',
@@ -129,7 +129,7 @@ class TrainingController {
         // query all trainings from db
         try {
             const email: string = req.body.email
-            const userRoles = req.body.userRoles
+            const userRole= req.body.userRole
 
             let trainingListQueryBuilder: SelectQueryBuilder<Training> = dataSource
                 .createQueryBuilder()
@@ -138,7 +138,7 @@ class TrainingController {
             let subQueryWithFilteredTrainingStatus: SelectQueryBuilder<Training> = dataSource.getRepository(Training)
                     .createQueryBuilder('training')
 
-            if(userRoles.includes(UserRoleEnum.APPROVER)){
+            if(userRole === UserRoleEnum.APPROVER){
                 subQueryWithFilteredTrainingStatus
                     .select()
                     .where('training.trainingStatus <> :value', { value :TrainingStatusEnum.CANCELED })
@@ -172,7 +172,7 @@ class TrainingController {
 
 
             if(searchKeyword){
-                if(userRoles.includes(UserRoleEnum.SERVICER)){
+                if(userRole === UserRoleEnum.SERVICER){
                     subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
                         subQueryWithFilteredTrainingStatus,
                         [
@@ -208,7 +208,7 @@ class TrainingController {
                             'sm.servicerMasterName'
                         ],
                         searchKeyword as string)
-                }else if(userRoles.includes(UserRoleEnum.APPROVER)){
+                }else if(userRole === UserRoleEnum.APPROVER){
                     subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
                         subQueryWithFilteredTrainingStatus,
                         [
@@ -246,15 +246,15 @@ class TrainingController {
 
 
             let trainingListFiltered = trainingList
-            if(userRoles.includes(UserRoleEnum.APPROVER)){
+            if(userRole === UserRoleEnum.APPROVER){
                 trainingListFiltered = trainingList.filter(item => item.training_trainingStatus !== TrainingStatusEnum.CANCELED)
             }
 
             const totalPage = Math.ceil(totalNumber / +limit)
 
             return res.status(StatusCode.E200).send({
-                userRoles,
-                trainingList: Utils.formattedTrainingList(trainingListFiltered, userRoles),
+                userRole,
+                trainingList: Utils.formattedTrainingList(trainingListFiltered, userRole),
                 totalPage
             })
 
@@ -355,6 +355,7 @@ class TrainingController {
         try{
             const user: User =  await dataSource.getRepository(User)
                 .createQueryBuilder('user')
+                .innerJoinAndSelect('user.userRole', 'userRole')
                 .innerJoinAndSelect('user.servicer', 'servicerMaster')
                 .where('user.email = :email', { email })
                 .getOne() as User
@@ -513,7 +514,7 @@ class TrainingController {
      * @param res
      */
     static updateTrainingById = async (req: ExpReq, res: ExpRes) => {
-        const { email, trainingName, trainingType, startDate, endDate, hoursCount, trainingURL, userRoles } = req.body
+        const { email, userRole, trainingName, trainingType, startDate, endDate, hoursCount, trainingURL } = req.body
         const { trainingId } = req.params
 
 
@@ -525,7 +526,7 @@ class TrainingController {
             })
         }
 
-        if(userRoles.includes(UserRoleEnum.ADMIN)){
+        if(userRole === UserRoleEnum.ADMIN){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
             return res.status(error.statusCode).send({
                 info: '',
@@ -605,16 +606,15 @@ class TrainingController {
     }
 
     /**
-     * cancel training by trainingId
+     * withdraw training by trainingId
      * @param req
      * @param res
      */
     static deleteTrainingById = async (req: ExpReq, res: ExpRes) => {
-        const { email, userRoles } = req.body
+        const { email, userRole } = req.body
         const { trainingId } = req.params
 
-
-        if(userRoles.includes(UserRoleEnum.ADMIN) || userRoles.includes(UserRoleEnum.APPROVER)){
+        if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER ){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
             return res.status(error.statusCode).send({
                 info: '',
@@ -681,8 +681,8 @@ class TrainingController {
     }
 
     static updateTrainingStatusByIds = async (req: ExpReq, res: ExpRes) => {
-        const { trainingIds, approveOrReject, userRoles, email } = req.body
-        if(!userRoles.includes(UserRoleEnum.APPROVER)){
+        const { trainingIds, approveOrReject, userRole, email } = req.body
+        if(userRole !== UserRoleEnum.APPROVER){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
             return res.status(error.statusCode).send({
                 info: '',

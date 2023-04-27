@@ -28,7 +28,7 @@ class AuthControllers {
                 .getRepository(User)
                 .createQueryBuilder('user')
                 .leftJoin('user.servicer', 'servicerMaster')
-                // .innerJoinAndSelect('user.userRoles', 'userRole')
+                .innerJoinAndSelect('user.userRole', 'userRole')
                 .select([
                     'user.email AS email',
                     'user.password AS password',
@@ -36,13 +36,11 @@ class AuthControllers {
                     'CONCAT_WS(" ", user.firstName, user.lastName) AS userName',
                     'user.servicerId',
                     'servicerMaster.servicerMasterName AS servicerMasterName',
-                    // 'userRole.userRoleName AS userRoles'
+                    'userRole.userRoleName AS userRole'
                 ])
                 .where('email = :email', { email })
                 .getRawOne() as UserWithDetails
 
-
-            const userRoles = await Utils.getUserRoles(email)
 
             if(!user){
                 const error = new Error(null, StatusCode.E404, Message.ErrFind)
@@ -115,16 +113,6 @@ class AuthControllers {
         return res.send({
             message: 'new user saved!'
         })
-    }
-
-    /**
-     * query all user roles
-     * @param req
-     * @param res
-     */
-    static queryAllUserRoles = (req: ExpReq, res: ExpRes) => {
-        const allUserRoles = Object.values(UserRoleEnum)
-        return res.status(StatusCode.E200).send(allUserRoles)
     }
 }
 

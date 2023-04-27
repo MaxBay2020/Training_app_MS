@@ -5,7 +5,7 @@ import
     Column,
     CreateDateColumn,
     UpdateDateColumn,
-    PrimaryGeneratedColumn, OneToMany, PrimaryColumn, ManyToMany, JoinTable
+    PrimaryGeneratedColumn, OneToMany, PrimaryColumn
 }
     from 'typeorm'
 import User from "./User";
@@ -24,8 +24,7 @@ class UserRole extends BaseClass {
     })
     userRoleName: UserRoleEnum
 
-    @ManyToMany(() => User, user => user.userRoles)
-    @JoinTable()
+    @OneToMany(() => User, user => user.userRole)
     users: User[]
 }
 

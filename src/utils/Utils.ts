@@ -5,8 +5,6 @@ import {trainingScore, TrainingTypeEnum, UserRoleEnum} from "../enums/enums";
 import moment from "moment";
 import {eClassModuleCount, logoUrl} from "./consts";
 import PDFDocument = PDFKit.PDFDocument;
-import AppDataSource from "../data-source";
-import User from "../entities/User";
 
 class Utils {
      static queryAllRecordsInTable<T, Entity>(identifiers: T[], tableName: ObjectType<Entity>, primaryKeyColumnName: string) :Promise<Entity[]> {
@@ -69,8 +67,8 @@ class Utils {
     }
 
 
-    static formattedTrainingList = (originalTrainingList: any[], userRoles: string[]): {} => {
-        if(userRoles.includes(UserRoleEnum.SERVICER)){
+    static formattedTrainingList = (originalTrainingList: any[], userRole: string): {} => {
+        if(userRole === UserRoleEnum.SERVICER){
             return originalTrainingList.map(item => {
                 const {
                     training_id,
@@ -230,10 +228,10 @@ class Utils {
      * @param doc
      */
     static generatePDFHeader = (doc: PDFDocument) => {
-        doc.image(logoUrl, 50, 45, { width: 50 })
+        doc.image(logoUrl, 50, 45, { width: 100 })
             .fillColor('#444444')
             .fontSize(14)
-            .text('SF-DART TRSII Credit Report', 110, 64)
+            .text('Credit Report', 50, 65)
             // .fontSize(10)
             // .text('123 Main Street', 200, 65, { align: 'right' })
             // .text('New York, NY, 10025', 200, 80, { align: 'right' })
@@ -248,7 +246,7 @@ class Utils {
         doc.fontSize(
             10,
         ).text(
-            'Thank you for using SF-DART. If you have any questions, please contact support@hudsfdart.com',
+            'Thank you. If you have any questions, please contact luna@yongesolutions.com',
             50,
             780,
             { align: 'center', width: 500 },
@@ -326,21 +324,6 @@ class Utils {
             .moveTo(startX, y)
             .lineTo(endX, y)
             .stroke();
-    }
-
-
-    /**
-     * query user roles by user email
-     * @param email
-     */
-    static getUserRoles = async (email: string): Promise<string[]> => {
-        const user = await AppDataSource
-            .getRepository(User)
-            .createQueryBuilder('user')
-            .innerJoinAndSelect('user.userRoles', 'userRole')
-            .where('email = :email', { email })
-            .getOne() as User
-        return user.userRoles.map(userRole => userRole.userRoleName)
     }
 }
 
