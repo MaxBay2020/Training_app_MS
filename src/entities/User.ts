@@ -5,7 +5,7 @@ import
     Column,
     CreateDateColumn,
     UpdateDateColumn,
-    ManyToOne, PrimaryColumn, OneToMany, PrimaryGeneratedColumn
+    ManyToOne, PrimaryColumn, OneToMany, PrimaryGeneratedColumn, ManyToMany, JoinTable
 }
     from 'typeorm'
 import {UserRoleEnum} from "../enums/enums";
@@ -38,8 +38,8 @@ class User extends BaseClass {
     @Column()
     lastName: string
 
-    @ManyToOne(() => UserRole, userRole => userRole.users)
-    userRole: UserRole
+    @ManyToMany(() => UserRole, userRole => userRole.users)
+    userRoles: UserRole[]
 
     @ManyToOne(()=>ServicerMaster,
             servicerMaster => servicerMaster.users,
