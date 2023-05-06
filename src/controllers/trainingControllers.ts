@@ -18,7 +18,7 @@ class TrainingController {
 
     static queryAllTrainingCredits = async (req: ExpReq, res: ExpRes) => {
         const { userRole, email, servicerMasterId } = req.body
-        if(userRole !== UserRoleEnum.SERVICER){
+        if(userRole !== UserRoleEnum.SERVICER && userRole !== UserRoleEnum.SERVICER_COORDINATOR){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
             return res.status(StatusCode.E200).send({
                 info: '',
@@ -343,7 +343,8 @@ class TrainingController {
             traineeList
         } = req.body
 
-        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate || endDate > new Date()){
+
+        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate || new Date(endDate) > new Date()){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
                 info: error.info,
@@ -517,8 +518,7 @@ class TrainingController {
         const { email, userRole, trainingName, trainingType, startDate, endDate, hoursCount, trainingURL } = req.body
         const { trainingId } = req.params
 
-
-        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate){
+        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate || new Date(endDate) > new Date()){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
                 info: error.info,
