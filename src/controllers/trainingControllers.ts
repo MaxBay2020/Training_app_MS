@@ -168,7 +168,7 @@ class TrainingController {
 
 
             subQueryWithFilteredTrainingStatus
-                .orderBy(`training_${sortByFieldName}`, sortByOrder)
+                .orderBy(sortByFieldName, sortByOrder)
 
 
             if(searchKeyword){

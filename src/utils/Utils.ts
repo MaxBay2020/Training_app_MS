@@ -25,13 +25,13 @@ class Utils {
     static getSortingMethod = (sortByNumber = 1): { sortByFieldName: string, sortByOrder: 'ASC' | 'DESC' } => {
         if(sortByNumber === 1){
             return {
-                sortByFieldName: 'createdAt',
+                sortByFieldName: 'training_createdAt',
                 sortByOrder: 'DESC'
             }
         }
         else if(sortByNumber === 2){
              return {
-                 sortByFieldName: 'trainingName',
+                 sortByFieldName: 'training_trainingName',
                  sortByOrder: 'ASC'
              }
          }
@@ -41,6 +41,12 @@ class Utils {
                  sortByOrder: 'ASC'
              }
          }
+         else if(sortByNumber === 10){
+            return {
+                sortByFieldName: 'CAST(training_trainingType AS CHAR)',
+                sortByOrder: 'ASC'
+            }
+        }
 
 
          return {
