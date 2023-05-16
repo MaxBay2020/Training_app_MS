@@ -25,13 +25,13 @@ class Utils {
     static getSortingMethod = (sortByNumber = 1): { sortByFieldName: string, sortByOrder: 'ASC' | 'DESC' } => {
         if(sortByNumber === 1){
             return {
-                sortByFieldName: 'createdAt',
+                sortByFieldName: 'training_createdAt',
                 sortByOrder: 'DESC'
             }
         }
         else if(sortByNumber === 2){
              return {
-                 sortByFieldName: 'trainingName',
+                 sortByFieldName: 'training_trainingName',
                  sortByOrder: 'ASC'
              }
          }
@@ -41,6 +41,12 @@ class Utils {
                  sortByOrder: 'ASC'
              }
          }
+         else if(sortByNumber === 10){
+            return {
+                sortByFieldName: 'CAST(training_trainingType AS CHAR)',
+                sortByOrder: 'ASC'
+            }
+        }
 
 
          return {
@@ -228,10 +234,10 @@ class Utils {
      * @param doc
      */
     static generatePDFHeader = (doc: PDFDocument) => {
-        doc.image(logoUrl, 50, 45, { width: 100 })
+        doc.image(logoUrl, 50, 45, { width: 50 })
             .fillColor('#444444')
             .fontSize(14)
-            .text('Credit Report', 50, 65)
+            .text('Credit Report', 120, 65)
             // .fontSize(10)
             // .text('123 Main Street', 200, 65, { align: 'right' })
             // .text('New York, NY, 10025', 200, 80, { align: 'right' })
@@ -246,7 +252,7 @@ class Utils {
         doc.fontSize(
             10,
         ).text(
-            'Thank you. If you have any questions, please contact luna@yongesolutions.com',
+            'Thank you. If you have any questions, please contact support@hudsfdart.com',
             50,
             780,
             { align: 'center', width: 500 },

@@ -320,10 +320,12 @@ class TrainingController {
                 myDoc.on('data', buffers.push.bind(buffers))
                 myDoc.on('end', () => {
                     const pdfData = Buffer.concat(buffers);
-                    res.writeHead(200, {
-                        'Content-Length': Buffer.byteLength(pdfData),
-                        'Content-Type': 'application/pdf',
-                        'Content-disposition': 'attachment;filename=test.pdf',})
+                    res
+                        .writeHead(200, {
+                            'Content-Length': Buffer.byteLength(pdfData),
+                            'Content-Type': 'application/pdf',
+                            'Content-disposition': 'attachment;filename=test.pdf',
+                        })
                         .end(pdfData)
                 })
 
