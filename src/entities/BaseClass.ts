@@ -2,22 +2,10 @@ import {BaseEntity, Column, CreateDateColumn, UpdateDateColumn} from "typeorm";
 
 class BaseClass extends BaseEntity {
     @CreateDateColumn()
-    createdAt: Date
+    first_create_dt: Date
 
     @UpdateDateColumn()
-    updatedAt: Date
-
-    @Column({
-        nullable: true,
-        default: true
-    })
-    isActive: boolean
-
-    @Column({
-        nullable: true,
-        default: false
-    })
-    isDelete: boolean
+    last_update_dt: Date
 }
 
 export default BaseClass

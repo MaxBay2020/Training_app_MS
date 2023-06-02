@@ -11,21 +11,30 @@ import
 import User from "./User";
 import BaseClass from "./BaseClass";
 import Training from "./Training";
+import {MaxLength} from "class-validator";
 
 
-@Entity('servicer_master')
-class ServicerMaster extends BaseClass {
+@Entity('servicer')
+class Servicer extends BaseClass {
     @PrimaryColumn()
-    id: string
+    servicer_id: string
 
     @Column()
-    servicerMasterName: string
+    @MaxLength(50)
+    servicer_nm: string
+
+    @Column()
+    @MaxLength(1)
+    servicer_sts_cd: string
 
     @OneToMany(() => User, user => user.servicer)
     users: User[]
 
-    @OneToMany(() => Training, training => training.servicerMaster)
+    @OneToMany(() => User, user => user.servicer)
+    trainee: User[]
+
+    @OneToMany(() => Training, training => training.servicer)
     trainings: Training[]
 }
 
-export default ServicerMaster
+export default Servicer

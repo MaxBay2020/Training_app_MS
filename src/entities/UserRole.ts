@@ -11,20 +11,27 @@ import
 import User from "./User";
 import BaseClass from "./BaseClass";
 import {UserRoleEnum} from "../enums/enums";
+import {MaxLength} from "class-validator";
 
 
-@Entity('user_role')
+@Entity('role_ref')
 class UserRole extends BaseClass {
     @PrimaryGeneratedColumn('increment')
-    id: string
+    role_id: number
 
     @Column({
+        type: 'enum',
+        enum: UserRoleEnum,
         nullable: true,
         default: UserRoleEnum.SERVICER
     })
-    userRoleName: UserRoleEnum
+    role_nm: UserRoleEnum
 
-    @OneToMany(() => User, user => user.userRole)
+    @Column()
+    @MaxLength(255)
+    role_desc: string
+
+    @OneToMany(() => User, user => user.role)
     users: User[]
 }
 

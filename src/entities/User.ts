@@ -9,53 +9,53 @@ import
 }
     from 'typeorm'
 import {UserRoleEnum} from "../enums/enums";
-import ServicerMaster from "./ServicerMaster";
+import Servicer from "./Servicer";
 import Training from "./Training";
 import BaseClass from "./BaseClass";
-import {IsEmail} from "class-validator";
+import {IsEmail, MaxLength} from "class-validator";
 import UserRole from "./UserRole";
 
 
 @Entity('user')
 class User extends BaseClass {
-    @PrimaryGeneratedColumn('uuid')
-    id: string
+    @PrimaryGeneratedColumn('increment')
+    user_id: number
+
+    @Column()
+    @MaxLength(30)
+    user_first_nm: string
+
+    @Column()
+    @MaxLength(30)
+    user_last_nm: string
 
     @Column({
         unique: true
     })
     @IsEmail()
-    email: string
-
-    @Column({
-        nullable: true
-    })
-    password: string
+    @MaxLength(100)
+    user_email_id: string
 
     @Column()
-    firstName: string
-
-    @Column()
-    lastName: string
+    @MaxLength(20)
+    user_pwd: string
 
     @ManyToOne(() => UserRole, userRole => userRole.users)
-    userRole: UserRole
+    role: UserRole
 
-    @ManyToOne(()=>ServicerMaster,
-            servicerMaster => servicerMaster.users,
-        {
+    @ManyToOne(() => Servicer, servicerMaster => servicerMaster.users, {
         nullable: true
-        })
-    servicer: ServicerMaster
+    })
+    servicer: Servicer
 
-    @OneToMany(() => Training, training => training.user)
-    trainings: Training[]
-
-    @OneToMany(() => Training, training => training.operatedBy)
+    @OneToMany(() => Training, training => training.operated_by_user)
     operatedTrainings: Training[]
 
-    @OneToMany(() => Training, training => training.updatedBy)
-    updatedTrainings: Training[]
+    @OneToMany(() => Training, training => training.reported_by_user)
+    reportedTrainings: Training[]
+
+    // @OneToMany(() => Training, training => training.updatedBy)
+    // updatedTrainings: Training[]
 
 }
 
