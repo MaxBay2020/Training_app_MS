@@ -8,7 +8,7 @@ import {validate} from "class-validator";
 import Utils from "../utils/Utils";
 import {In, Repository, SelectQueryBuilder} from "typeorm";
 import AppDataSource from "../data-source";
-import ServicerMaster from "../entities/ServicerMaster";
+import Servicer from "../entities/Servicer";
 import {maxCredits} from "../utils/consts";
 import EClass from "../entities/EClass";
 import {Trainee} from "../utils/dataType";
@@ -138,14 +138,7 @@ class TrainingController {
             let subQueryWithFilteredTrainingStatus: SelectQueryBuilder<Training> = dataSource.getRepository(Training)
                     .createQueryBuilder('training')
 
-            if(userRole === UserRoleEnum.APPROVER){
-                subQueryWithFilteredTrainingStatus
-                    .select()
-                    .where('training.trainingStatus <> :value', { value :TrainingStatusEnum.CANCELED })
-            }else{
-                subQueryWithFilteredTrainingStatus
-                    .select()
-            }
+
 
             subQueryWithFilteredTrainingStatus
                 .innerJoinAndSelect('training.trainee', 'user')
@@ -226,6 +219,15 @@ class TrainingController {
                 }
             }
 
+            if(userRole === UserRoleEnum.APPROVER){
+                subQueryWithFilteredTrainingStatus
+                    .select()
+                    .where('training.trainingStatus <> :value', { value :TrainingStatusEnum.CANCELED })
+            }else{
+                subQueryWithFilteredTrainingStatus
+                    .select()
+            }
+
             const totalNumber: number = await subQueryWithFilteredTrainingStatus.getCount() as number
 
             const trainingList = await trainingListQueryBuilder
@@ -245,16 +247,16 @@ class TrainingController {
             //     .getRawMany()
 
 
-            let trainingListFiltered = trainingList
-            if(userRole === UserRoleEnum.APPROVER){
-                trainingListFiltered = trainingList.filter(item => item.training_trainingStatus !== TrainingStatusEnum.CANCELED)
-            }
+            // let trainingListFiltered = trainingList
+            // if(userRole === UserRoleEnum.APPROVER){
+            //     trainingListFiltered = trainingList.filter(item => item.training_trainingStatus !== TrainingStatusEnum.CANCELED)
+            // }
 
             const totalPage = Math.ceil(totalNumber / +limit)
 
             return res.status(StatusCode.E200).send({
                 userRole,
-                trainingList: Utils.formattedTrainingList(trainingListFiltered, userRole),
+                trainingList: Utils.formattedTrainingList(trainingList, userRole),
                 totalPage
             })
 
@@ -381,7 +383,7 @@ class TrainingController {
             const { servicer: servicerMaster } = user
 
             const trainingStatus =
-                trainingType === TrainingTypeEnum.LiveTraining || trainingType === TrainingTypeEnum.ECLASS ?
+                trainingType === TrainingTypeEnum.ECLASS ?
                     TrainingStatusEnum.APPROVED : TrainingStatusEnum.SUBMITTED
 
             if(userRole === UserRoleEnum.SERVICER){

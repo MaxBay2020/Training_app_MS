@@ -8,7 +8,7 @@ import Utils from "../utils/Utils";
 import {SelectQueryBuilder} from "typeorm";
 import {maxCredits} from "../utils/consts";
 import _ from "lodash";
-import ServicerMaster from "../entities/ServicerMaster";
+import Servicer from "../entities/Servicer";
 import PDFDocument from 'pdfkit'
 import * as XLSX from 'xlsx'
 
@@ -47,8 +47,8 @@ class TrainingController {
             }
 
 
-            let servicerMasterQueryBuilder: SelectQueryBuilder<ServicerMaster> = dataSource
-                .getRepository(ServicerMaster)
+            let servicerMasterQueryBuilder: SelectQueryBuilder<Servicer> = dataSource
+                .getRepository(Servicer)
                 .createQueryBuilder('sm')
                 .select([
                     'sm.id',
@@ -67,7 +67,7 @@ class TrainingController {
                     searchKeyword as string)
             }
 
-            const paginationQueryBuilder: SelectQueryBuilder<ServicerMaster> = servicerMasterQueryBuilder
+            const paginationQueryBuilder: SelectQueryBuilder<Servicer> = servicerMasterQueryBuilder
                 .skip(startIndex)
                 .take(+limit)
 
@@ -95,7 +95,7 @@ class TrainingController {
                 .createQueryBuilder('training')
                 .innerJoinAndSelect('training.servicerMaster', 'sm')
                 .select([
-                    'sm.id AS smId',
+                    'sm.id AS sm_id',
                     'sm.servicerMasterName AS sm_servicerMasterName',
                     'training.trainingType AS trainingType'
                 ])
@@ -107,12 +107,12 @@ class TrainingController {
                 .addGroupBy('training.trainingType')
 
             trainingListQueryBuilder
-                .orderBy(`sm_${sortByFieldName}`, sortByOrder)
+                .orderBy(sortByFieldName, sortByOrder)
 
             const trainingList = await trainingListQueryBuilder.getRawMany()
 
 
-            const trainingListGroupBySmId = _.groupBy(trainingList, 'smId')
+            const trainingListGroupBySmId = _.groupBy(trainingList, 'sm_id')
 
             const trainingListStatsBySmId = _.map(_.keys(trainingListGroupBySmId), ele => {
                 return _.reduce(trainingListGroupBySmId[ele], (acc, cur) => {
@@ -140,7 +140,6 @@ class TrainingController {
                 }
             })
 
-
             const userStats = await Promise.all(trainingListStatsBySmIdWithCredits.map(async ele => {
                 const { smId } = ele
                 const userListQueryBuilder = dataSource
@@ -159,7 +158,6 @@ class TrainingController {
                     .andWhere('training.trainingStatus = :trainingStatus', { trainingStatus: TrainingStatusEnum.APPROVED })
                     .groupBy('training.trainingType')
                     .addGroupBy('user.email')
-
                 return userListQueryBuilder.getRawMany()
             }))
 
@@ -252,7 +250,7 @@ class TrainingController {
                 .addGroupBy('training.trainingType')
 
             trainingListQueryBuilder
-                .orderBy(`sm_${sortByFieldName}`, sortByOrder)
+                .orderBy(sortByFieldName, sortByOrder)
 
             const trainingList = await trainingListQueryBuilder.getRawMany()
 

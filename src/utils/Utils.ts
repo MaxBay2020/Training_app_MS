@@ -37,13 +37,18 @@ class Utils {
          }
          else if(sortByNumber === 3){
              return {
-                 sortByFieldName: 'servicerMasterName',
+                 sortByFieldName: 'sm_servicerMasterName',
                  sortByOrder: 'ASC'
              }
          }
          else if(sortByNumber === 10){
             return {
                 sortByFieldName: 'CAST(training_trainingType AS CHAR)',
+                sortByOrder: 'ASC'
+            }
+        }else if(sortByNumber === 11){
+            return {
+                sortByFieldName: 'sm_id',
                 sortByOrder: 'ASC'
             }
         }
