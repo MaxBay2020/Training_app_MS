@@ -68,7 +68,6 @@ class AuthControllers {
                 expiresIn: access_token_expiresIn
             })
 
-            console.log(user)
 
             const { userName, userRole, servicerId, servicerName } = user
             return res.status(StatusCode.E200).send({

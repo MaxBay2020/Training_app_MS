@@ -1,18 +1,18 @@
-// import express from 'express'
-// import TrainingController from "../controllers/trainingControllers";
-// import {validateUser} from "../middlewares/validateUser";
-// const trainingRouters = express.Router()
-//
-//
-// // get training with pagination, sorting, and search
+import express from 'express'
+import TrainingController from "../controllers/trainingControllers";
+import {validateUser} from "../middlewares/validateUser";
+const trainingRouters = express.Router()
+
+
+// get training with pagination, sorting, and search
 // trainingRouters.get('/trainingCredits', validateUser, TrainingController.queryAllTrainingCredits)
-//
-// // get all trainings
+
+// get all trainings
 // trainingRouters.get('/', validateUser, TrainingController.queryAllTrainings)
-//
-// // get all training type
-// trainingRouters.get('/trainingTypes', validateUser, TrainingController.queryAllTrainingTypes)
-//
+
+// get all training type
+trainingRouters.get('/trainingTypes', validateUser, TrainingController.queryAllTrainingTypes)
+
 // // query all eClass name
 // trainingRouters.get('/eClass', validateUser, TrainingController.queryAllEClassName)
 //
@@ -31,6 +31,6 @@
 //
 // // withdraw a training
 // trainingRouters.delete('/:trainingId', validateUser, TrainingController.deleteTrainingById)
-//
-//
-// export default trainingRouters
+
+
+export default trainingRouters
