@@ -24,22 +24,21 @@ class AuthControllers {
 
         try {
 
-            const user: UserWithDetails = await AppDataSource
+            const user = await AppDataSource
                 .getRepository(User)
                 .createQueryBuilder('user')
-                .leftJoin('user.servicer', 'servicerMaster')
-                .innerJoinAndSelect('user.userRole', 'userRole')
+                .leftJoin('user.servicer', 'sm')
+                .innerJoinAndSelect('user.role', 'role')
                 .select([
-                    'user.email AS email',
-                    'user.password AS password',
-                    'user.firstName AS firstName',
-                    'CONCAT_WS(" ", user.firstName, user.lastName) AS userName',
-                    'user.servicerId',
-                    'servicerMaster.servicerMasterName AS servicerMasterName',
-                    'userRole.userRoleName AS userRole'
+                    'user.user_email_id AS email',
+                    'user.user_pwd AS password',
+                    'CONCAT_WS(" ", user.user_first_nm, user.user_last_nm) AS userName',
+                    'sm.servicer_id AS servicerId',
+                    'sm.servicer_nm AS servicerName',
+                    'role.role_nm AS userRole'
                 ])
-                .where('email = :email', { email })
-                .getRawOne() as UserWithDetails
+                .where('user.user_email_id = :email', { email })
+                .getRawOne()
 
 
             if(!user){
@@ -69,14 +68,16 @@ class AuthControllers {
                 expiresIn: access_token_expiresIn
             })
 
-            const { userName, userRole, servicerId, servicerMasterName } = user
+            console.log(user)
+
+            const { userName, userRole, servicerId, servicerName } = user
             return res.status(StatusCode.E200).send({
                 accessToken: token,
                 userName,
                 userEmail: email,
                 userRole,
                 servicerId,
-                servicerMasterName
+                servicerMasterName: servicerName
             })
         }catch (e) {
             console.log(e.message)
@@ -100,7 +101,12 @@ class AuthControllers {
         // hash password
         const salt = await bcrypt.genSalt(saltRounds)
         const hash = await bcrypt.hash(password, salt)
-        const newUser = User.create({ email, password: hash, firstName, lastName })
+        const newUser = User.create({
+            user_email_id: email,
+            user_pwd: hash,
+            user_first_nm: firstName,
+            user_last_nm: lastName
+        })
 
         const errors = await validate(newUser)
         if(errors.length > 0){

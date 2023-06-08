@@ -1,12 +1,12 @@
 import express, {Express} from 'express'
 import bodyParser from 'body-parser'
-import trainingRouters from "./routes/trainingRoutes";
+// import trainingRouters from "./routes/trainingRoutes";
 import AppDataSource from "./data-source";
 import cors from "cors";
 import authRouters from "./routes/authRoutes"
 import dotenv from 'dotenv'
-import creditRouters from "./routes/creditsRoutes";
-import {validateUser} from "./middlewares/validateUser";
+// import creditRouters from "./routes/creditsRoutes";
+// import {validateUser} from "./middlewares/validateUser";
 
 const startServer = async () => {
     const app: Express = express()
@@ -27,9 +27,9 @@ const startServer = async () => {
     dotenv.config()
 
 
-    app.use('/training', trainingRouters)
+    // app.use('/training', trainingRouters)
     app.use('/auth', authRouters)
-    app.use('/credit', creditRouters)
+    // app.use('/credit', creditRouters)
 
     // error handler
     app.use('*', (req, res) => {
