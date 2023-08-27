@@ -51,7 +51,6 @@ class AuthControllers {
             }
 
 
-
             const hash = user.password
             const isCorrect = await bcrypt.compare(password, hash)
 

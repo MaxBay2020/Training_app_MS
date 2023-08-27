@@ -8,8 +8,8 @@ import {validate} from "class-validator";
 import Utils from "../utils/Utils";
 import {In, Repository, SelectQueryBuilder} from "typeorm";
 import AppDataSource from "../data-source";
-import Servicer from "../entities/Servicer";
-import {maxCredits} from "../utils/consts";
+import Servicer from "../entities/ServicerMaster";
+import {maxCredits, OrderByType} from "../utils/consts";
 import EClass from "../entities/EClass";
 import {Trainee} from "../utils/dataType";
 
@@ -111,18 +111,18 @@ class TrainingController {
      */
     static queryAllTrainings = async (req: ExpReq, res: ExpRes) => {
 
-        const { searchKeyword, sortBy, page, limit } = req.query
-
+        const { searchKeyword, orderBy, order, page, limit } = req.query
         const { servicerMasterId } = req.body
 
-        if(!sortBy || !page || !limit){
+        if(!page || !limit || !orderBy || !order){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
                 info: error.info,
                 message: error.message
             })
         }
-        const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(+sortBy)
+        const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(orderBy as string, order as OrderByType)
+
 
         const startIndex = (+page - 1) * (+limit)
 
