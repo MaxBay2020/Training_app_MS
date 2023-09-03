@@ -20,7 +20,7 @@ trainingRouters.get('/trainingTypes', validateUser, TrainingController.queryAllT
 // trainingRouters.get('/:trainingId', validateUser, TrainingController.queryTrainingById)
 //
 // // create a training
-// trainingRouters.post('/add', validateUser, TrainingController.createTraining)
+trainingRouters.post('/add', validateUser, TrainingController.createTraining)
 //
 // // update training status, eg: pending -> approved OR rejected
 // // approver use!!!

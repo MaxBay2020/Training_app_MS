@@ -14,7 +14,9 @@ export type TableHeadLabelType = {
     'End Date': string,
     'Hours': string,
     'Training Status': string,
-    'Training created at': string
+    'Training created at': string,
+    'Servicer ID': string,
+    'Servicer Name': string
 }
 
 export type OrderByType = 'ASC' | 'DESC'
@@ -28,5 +30,7 @@ export const tableHeadLabels: TableHeadLabelType = {
     'End Date': 'training_endDate',
     'Hours': 'training_hoursCount',
     'Training Status': 'training_trainingStatus',
-    'Training created at': 'training_createdAt'
+    'Training created at': 'training_createdAt',
+    'Servicer ID': 'sm_id',
+    'Servicer Name': 'sm_servicerMasterName'
 }
