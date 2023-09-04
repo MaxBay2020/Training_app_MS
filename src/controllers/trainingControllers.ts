@@ -12,6 +12,7 @@ import Servicer from "../entities/ServicerMaster";
 import {maxCredits, OrderByType} from "../utils/consts";
 import EClass from "../entities/EClass";
 import {Trainee} from "../utils/dataType";
+import moment from "moment";
 
 
 class TrainingController {
@@ -754,6 +755,19 @@ class TrainingController {
                 message: error.message
             })
         }
+    }
+
+    static queryCurrentFiscalYear = (req: ExpReq, res: ExpRes) => {
+        const { currentFiscalStartTime, currentFiscalEndTime } = Utils.getCurrentFiscalTimeRange(fiscalEndDate.month, fiscalEndDate.date)
+        const startDate = moment(`${moment().year()}/9/30`, 'YYYY/MM/DD')
+        const endDate = moment(`${moment().year()}/11/01`, 'YYYY/MM/DD')
+
+        const isBufferTimePeriod = moment().isBetween(startDate, endDate)
+
+        return res.status(StatusCode.E200).send({
+            currentFiscalStartTime: isBufferTimePeriod ?  moment(currentFiscalStartTime).subtract(1, 'years').toDate() : currentFiscalStartTime,
+            currentFiscalEndTime
+        })
     }
 }
 

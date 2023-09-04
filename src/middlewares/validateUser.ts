@@ -5,7 +5,6 @@ import Error, {Message, StatusCode} from "../enums/Error";
 import jwt from "jsonwebtoken"
 
 export const validateUser = async (req: ExpReq, res: ExpRes, next: NextFunction) => {
-
     try {
         const authHeader = req.headers.authorization
 

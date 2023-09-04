@@ -30,35 +30,7 @@ class Utils {
                 sortByOrder: 'DESC'
             }
         }
-        // else if(sortByNumber === 2){
-        //      return {
-        //          sortByFieldName: 'training_trainingName',
-        //          sortByOrder: 'ASC'
-        //      }
-        //  }
-        //  else if(sortByNumber === 3){
-        //      return {
-        //          sortByFieldName: 'sm_servicerMasterName',
-        //          sortByOrder: 'ASC'
-        //      }
-        //  }
-        //  else if(sortByNumber === 10){
-        //     return {
-        //         sortByFieldName: 'CAST(training_trainingType AS CHAR)',
-        //         sortByOrder: 'ASC'
-        //     }
-        // }else if(sortByNumber === 11){
-        //     return {
-        //         sortByFieldName: 'sm_id',
-        //         sortByOrder: 'ASC'
-        //     }
-        // }
-        //
-        //
-        //  return {
-        //      sortByFieldName: 'createdAt',
-        //      sortByOrder: 'DESC'
-        //  }
+
         return {
             sortByFieldName: tableHeadLabels[orderBy as keyof TableHeadLabelType],
             sortByOrder: order
