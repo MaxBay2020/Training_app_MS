@@ -67,6 +67,7 @@ class Utils {
                     training_startDate,
                     training_endDate,
                     training_trainingURL,
+                    training_createdAt,
                 } = item
                 return {
                     id: training_id,
@@ -77,6 +78,7 @@ class Utils {
                     startDate: training_startDate,
                     endDate: training_endDate,
                     trainingURL: training_trainingURL,
+                    createdAt: training_createdAt
                 }
             })
         }else if(userRole === UserRoleEnum.SERVICER_COORDINATOR){
@@ -90,6 +92,7 @@ class Utils {
                     training_startDate,
                     training_endDate,
                     training_trainingURL,
+                    training_createdAt,
 
                     user_email,
                     user_firstName,
@@ -104,6 +107,7 @@ class Utils {
                     startDate: training_startDate,
                     endDate: training_endDate,
                     trainingURL: training_trainingURL,
+                    createdAt: training_createdAt,
 
                     userEmail: user_email,
                     userFirstName: user_firstName,
@@ -128,6 +132,7 @@ class Utils {
                     training_startDate,
                     training_endDate,
                     training_trainingURL,
+                    training_createdAt,
                 } = item
 
                 return {
@@ -146,6 +151,7 @@ class Utils {
                     startDate: training_startDate,
                     endDate: training_endDate,
                     trainingURL: training_trainingURL,
+                    createdAt: training_createdAt
 
                 }
             })
