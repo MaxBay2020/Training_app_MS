@@ -31,4 +31,10 @@ export enum trainingScore {
 }
 
 
+export enum targetTableToDownload {
+    trainingTable = 'trainingTable',
+    creditTable = 'creditTable'
+}
+
+
 

@@ -124,7 +124,6 @@ class TrainingController {
         }
         const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(orderBy as string, order as OrderByType)
 
-
         const startIndex = (+page - 1) * (+limit)
 
         // query all trainings from db

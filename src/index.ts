@@ -7,6 +7,7 @@ import authRouters from "./routes/authRoutes"
 import dotenv from 'dotenv'
 // import creditRouters from "./routes/creditsRoutes";
 import {validateUser} from "./middlewares/validateUser";
+import indexRoutes from "./routes/indexRoutes";
 
 const startServer = async () => {
     const app: Express = express()
@@ -26,17 +27,8 @@ const startServer = async () => {
     app.use(cors())
     dotenv.config()
 
+    app.use(indexRoutes)
 
-    app.use('/training', trainingRouters)
-    app.use('/auth', authRouters)
-    // app.use('/credit', creditRouters)
-
-    // error handler
-    app.use('*', (req, res) => {
-        return res.status(404).json({
-            message: 'NO MATCHED ROUTER'
-        })
-    })
 
     const port = Number(process.env.PORT) || 8000
     app.listen(port, () => {
