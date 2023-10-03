@@ -114,21 +114,18 @@ class DownloadController {
 
                 subQueryWithFilteredTrainingStatus
                     .innerJoinAndSelect('training.trainee', 'user')
+                    .innerJoinAndSelect('user.servicer', 'sm')
 
                 if(userRole === UserRoleEnum.SERVICER){
                     subQueryWithFilteredTrainingStatus
                         .where('user.email = :email', { email })
                 }
 
+
+
                 if(userRole === UserRoleEnum.SERVICER_COORDINATOR){
                     subQueryWithFilteredTrainingStatus
-                        .innerJoinAndSelect('user.servicer', 'sm')
                         .where('sm.id = :servicerMasterId', { servicerMasterId })
-                }
-
-                if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER){
-                    subQueryWithFilteredTrainingStatus
-                        .innerJoinAndSelect('user.servicer', 'sm')
                 }
 
 
@@ -201,7 +198,6 @@ class DownloadController {
                 }
 
                 const trainingTable = await subQueryWithFilteredTrainingStatus.getRawMany()
-                console.log(trainingTable)
                 if(fileType === 1){
                     // ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇ Download Excel Start ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇
                     const formattedTrainingTable = trainingTable.reduce((acc: any, cur) => {
