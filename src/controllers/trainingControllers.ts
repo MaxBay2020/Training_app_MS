@@ -122,7 +122,7 @@ class TrainingController {
                 message: error.message
             })
         }
-        const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(orderBy as string, order as OrderByType)
+        const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(orderBy as string, order as OrderByType, 'trainingTable')
 
         const startIndex = (+page - 1) * (+limit)
 

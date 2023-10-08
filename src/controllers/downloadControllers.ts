@@ -37,8 +37,6 @@ class DownloadController {
 
         const fileType: number = +req.headers.filetype
 
-        const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(orderBy as string, order as OrderByType)
-
         // query all trainings from db
         try {
             // const userRole= req.body.userRole
@@ -105,6 +103,8 @@ class DownloadController {
             if(targetTable === targetTableToDownload.trainingTable){
                 const email: string = req.body.email
                 const userRole= req.body.userRole
+
+                const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(orderBy as string, order as OrderByType, 'trainingTable')
 
 
                 let subQueryWithFilteredTrainingStatus: SelectQueryBuilder<Training> = dataSource.getRepository(Training)

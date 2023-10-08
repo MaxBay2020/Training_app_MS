@@ -3,7 +3,14 @@ import {Brackets, ObjectType, SelectQueryBuilder} from "typeorm";
 import Training from "../entities/Training";
 import {trainingScore, TrainingTypeEnum, UserRoleEnum} from "../enums/enums";
 import moment from "moment";
-import {eClassModuleCount, logoUrl, OrderByType, tableHeadLabels, TableHeadLabelType} from "./consts";
+import {
+    defaultSortingFieldName, defaultSortingFieldNameType,
+    eClassModuleCount,
+    logoUrl,
+    OrderByType,
+    tableHeadLabels,
+    TableHeadLabelType
+} from "./consts";
 import PDFDocument = PDFKit.PDFDocument;
 
 class Utils {
@@ -22,11 +29,12 @@ class Utils {
      * order by for training table
      * @param orderBy
      * @param order
+     * @param whichTable
      */
-    static getSortingMethod = (orderBy: string, order: OrderByType): { sortByFieldName: string, sortByOrder: 'ASC' | 'DESC' } => {
+    static getSortingMethod = (orderBy: string, order: OrderByType, whichTable: keyof defaultSortingFieldNameType): { sortByFieldName: string, sortByOrder: 'ASC' | 'DESC' } => {
         if(!orderBy || !order){
             return {
-                sortByFieldName: 'training_createdAt',
+                sortByFieldName: defaultSortingFieldName[whichTable],
                 sortByOrder: 'DESC'
             }
         }

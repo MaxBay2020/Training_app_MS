@@ -1,355 +1,186 @@
-// import {Request as ExpReq, Response as ExpRes} from 'express'
-// import Training from "../entities/Training";
-// import {fiscalEndDate, TrainingStatusEnum, TrainingTypeEnum, UserRoleEnum} from "../enums/enums";
-// import dataSource from "../data-source";
-// import AppDataSource from "../data-source";
-// import Error, {Message, StatusCode} from "../enums/Error";
-// import Utils from "../utils/Utils";
-// import {SelectQueryBuilder} from "typeorm";
-// import {maxCredits} from "../utils/consts";
-// import _ from "lodash";
-// import Servicer from "../entities/ServicerMaster";
-// import PDFDocument from 'pdfkit'
-// import * as XLSX from 'xlsx'
-//
-// class TrainingController {
-//     /**
-//      * get all credits data with pagination, sorting, and search
-//      * @param req
-//      * @param res
-//      */
-//     static queryAllCredits = async (req: ExpReq, res: ExpRes) => {
-//
-//         const { searchKeyword, sortBy, page, limit } = req.query
-//
-//
-//         if(!sortBy || !page || !limit){
-//             const error = new Error(null, StatusCode.E400, Message.ErrParams)
-//             return res.status(error.statusCode).send({
-//                 info: error.info,
-//                 message: error.message
-//             })
-//         }
-//         const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(+sortBy)
-//
-//         const startIndex = (+page - 1) * (+limit)
-//
-//         // query all trainings from db
-//         try {
-//             const userRole= req.body.userRole
-//
-//             if(userRole === UserRoleEnum.SERVICER){
-//                 const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
-//                 return res.status(200).send({
-//                     info: '',
-//                     message: error.message
-//                 })
-//             }
-//
-//
-//             let servicerMasterQueryBuilder: SelectQueryBuilder<Servicer> = dataSource
-//                 .getRepository(Servicer)
-//                 .createQueryBuilder('sm')
-//                 .select([
-//                     'sm.id',
-//                     'sm.servicerMasterName'
-//                 ])
-//
-//
-//
-//             if(searchKeyword){
-//                 servicerMasterQueryBuilder = Utils.specifyColumnsToSearch(
-//                     servicerMasterQueryBuilder,
-//                     [
-//                         'sm.id',
-//                         'sm.servicerMasterName'
-//                     ],
-//                     searchKeyword as string)
-//             }
-//
-//             const paginationQueryBuilder: SelectQueryBuilder<Servicer> = servicerMasterQueryBuilder
-//                 .skip(startIndex)
-//                 .take(+limit)
-//
-//             const [totalNumber, smList] = await Promise.all([
-//                 servicerMasterQueryBuilder.getCount(),
-//                 paginationQueryBuilder.getMany()
-//             ])
-//
-//
-//             // get the list of sm ids
-//             const smIdList = smList.map( sm => sm.id)
-//
-//
-//             if(smIdList.length === 0){
-//                 return res.status(200).send({
-//                     userRole,
-//                     creditsStats: [],
-//                     totalPage: 0
-//                 })
-//             }
-//
-//             // query all trainings grouped by training type and distinct with training name & training type
-//             const trainingListQueryBuilder: SelectQueryBuilder<Training> = dataSource
-//                 .getRepository(Training)
-//                 .createQueryBuilder('training')
-//                 .innerJoinAndSelect('training.servicerMaster', 'sm')
-//                 .select([
-//                     'sm.id AS sm_id',
-//                     'sm.servicerMasterName AS sm_servicerMasterName',
-//                     'training.trainingType AS trainingType'
-//                 ])
-//                 .addSelect('COUNT(DISTINCT training.trainingName, training.trainingType)', 'trainingCount')
-//                 .where('training.trainingStatus = :value', { value: TrainingStatusEnum.APPROVED })
-//                 .andWhere('sm.id IN(:smIdList)', { smIdList })
-//                 .groupBy('sm.id')
-//                 .addGroupBy('sm.servicerMasterName')
-//                 .addGroupBy('training.trainingType')
-//
-//             trainingListQueryBuilder
-//                 .orderBy(sortByFieldName, sortByOrder)
-//
-//             const trainingList = await trainingListQueryBuilder.getRawMany()
-//
-//
-//             const trainingListGroupBySmId = _.groupBy(trainingList, 'sm_id')
-//
-//             const trainingListStatsBySmId = _.map(_.keys(trainingListGroupBySmId), ele => {
-//                 return _.reduce(trainingListGroupBySmId[ele], (acc, cur) => {
-//                     const trainingType: TrainingTypeEnum = cur.trainingType
-//                     return acc[trainingType] += +cur.trainingCount, acc
-//                 }, { smId: ele, smName: trainingListGroupBySmId[ele][0].sm_servicerMasterName, ECLASS: 0, LiveTraining: 0, Webinar: 0})
-//             })
-//
-//
-//             const trainingListStatsBySmIdWithCredits = trainingListStatsBySmId.map( ele => {
-//                 const credits =
-//                     Utils.getScoreByTrainingType(TrainingTypeEnum.ECLASS, ele[TrainingTypeEnum.ECLASS].toString()) +
-//                     Utils.getScoreByTrainingType(TrainingTypeEnum.LiveTraining, ele[TrainingTypeEnum.LiveTraining].toString()) +
-//                     Utils.getScoreByTrainingType(TrainingTypeEnum.Webinar, ele[TrainingTypeEnum.Webinar].toString())
-//
-//                 const creditsPercentage = new Intl.NumberFormat('default', {
-//                     style: 'percent',
-//                     minimumFractionDigits: 2,
-//                     maximumFractionDigits: 2,
-//                 }).format(Math.min(credits, maxCredits));
-//
-//                 return {
-//                     ...ele,
-//                     credits: creditsPercentage,
-//                 }
-//             })
-//
-//             const userStats = await Promise.all(trainingListStatsBySmIdWithCredits.map(async ele => {
-//                 const { smId } = ele
-//                 const userListQueryBuilder = dataSource
-//                     .getRepository(Training)
-//                     .createQueryBuilder('training')
-//                     .innerJoinAndSelect('training.servicerMaster', 'sm')
-//                     .innerJoinAndSelect('training.trainee', 'user')
-//                     .select([
-//                         'sm.id AS smId',
-//                         'training.trainingType AS trainingType',
-//                         'user.email AS userEmail',
-//                         `CONCAT_WS(' ', user.firstName, user.lastName) AS userName`
-//                     ])
-//                     .addSelect('COUNT(DISTINCT training.trainingName, training.trainingType)', 'trainingCount')
-//                     .where('sm.id = :smId', { smId })
-//                     .andWhere('training.trainingStatus = :trainingStatus', { trainingStatus: TrainingStatusEnum.APPROVED })
-//                     .groupBy('training.trainingType')
-//                     .addGroupBy('user.email')
-//                 return userListQueryBuilder.getRawMany()
-//             }))
-//
-//             const userStatsGroupByUserEmail = _.groupBy(userStats.flat(), 'userEmail')
-//
-//             const userListMerge = _.map(_.keys(userStatsGroupByUserEmail), ele => {
-//                 return _.reduce(userStatsGroupByUserEmail[ele], (acc, cur) => {
-//                     const trainingType: TrainingTypeEnum = cur.trainingType
-//                     return acc[trainingType] += +cur.trainingCount, acc
-//                 }, { smId: userStatsGroupByUserEmail[ele][0].smId, userName: userStatsGroupByUserEmail[ele][0].userName, userEmail: ele, ECLASS: 0, LiveTraining: 0, Webinar: 0})
-//             })
-//
-//             const userListMergeGroupBySmId = _.groupBy(userListMerge, 'smId')
-//
-//             const creditsStats = trainingListStatsBySmIdWithCredits.map( ele => {
-//                 return {
-//                     ...ele,
-//                     users: [...userListMergeGroupBySmId[ele.smId]]
-//                 }
-//             })
-//
-//             const totalPage = Math.ceil(totalNumber / +limit)
-//
-//             return res.status(200).send({
-//                 userRole,
-//                 creditsStats,
-//                 totalPage
-//             })
-//
-//         }catch(e){
-//             console.log(e.message)
-//             const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
-//             return res.status(error.statusCode).send({
-//                 info: error.info,
-//                 message: error.message
-//             })
-//         }
-//     }
-//
-//     /**
-//      * download all credits ONLY on servicer master base
-//      * NOTICE!
-//      * 1 - download Excel
-//      * 2 - download PDF
-//      * @param req
-//      * @param res
-//      */
-//     static downloadAllCredits = async (req: ExpReq, res: ExpRes) => {
-//
-//         const { sortBy = 3 } = req.query
-//
-//         if(!sortBy || !req.headers.filetype){
-//             const error = new Error(null, StatusCode.E400, Message.ErrParams)
-//             return res.status(error.statusCode).send({
-//                 info: error.info,
-//                 message: error.message
-//             })
-//         }
-//
-//         const fileType: number = +req.headers.filetype
-//
-//         const { sortByFieldName, sortByOrder } = Utils.getSortingMethod(+sortBy)
-//
-//         // query all trainings from db
-//         try {
-//             const userRole= req.body.userRole
-//
-//             if(userRole === UserRoleEnum.SERVICER){
-//                 const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
-//                 return res.status(200).send({
-//                     info: '',
-//                     message: error.message
-//                 })
-//             }
-//
-//             // query all trainings grouped by training type and distinct with training name & training type
-//             const trainingListQueryBuilder: SelectQueryBuilder<Training> = dataSource
-//                 .getRepository(Training)
-//                 .createQueryBuilder('training')
-//                 .innerJoinAndSelect('training.servicerMaster', 'sm')
-//                 .select([
-//                     'sm.id AS smId',
-//                     'sm.servicerMasterName AS sm_servicerMasterName',
-//                     'training.trainingType AS trainingType'
-//                 ])
-//                 .addSelect('COUNT(DISTINCT training.trainingName, training.trainingType)', 'trainingCount')
-//                 .where('training.trainingStatus = :value', { value: TrainingStatusEnum.APPROVED })
-//                 .groupBy('sm.id')
-//                 .addGroupBy('sm.servicerMasterName')
-//                 .addGroupBy('training.trainingType')
-//
-//             trainingListQueryBuilder
-//                 .orderBy(sortByFieldName, sortByOrder)
-//
-//             const trainingList = await trainingListQueryBuilder.getRawMany()
-//
-//
-//             const trainingListGroupBySmId = _.groupBy(trainingList, 'smId')
-//
-//             const trainingListStatsBySmId = _.map(_.keys(trainingListGroupBySmId), ele => {
-//                 return _.reduce(trainingListGroupBySmId[ele], (acc, cur) => {
-//                     const trainingType: TrainingTypeEnum = cur.trainingType
-//                     return acc[trainingType] += +cur.trainingCount, acc
-//                 }, { smId: ele, smName: trainingListGroupBySmId[ele][0].sm_servicerMasterName, ECLASS: 0, LiveTraining: 0, Webinar: 0})
-//             })
-//
-//
-//             const trainingListStatsBySmIdWithCredits = trainingListStatsBySmId.map( ele => {
-//                 const credits =
-//                     Utils.getScoreByTrainingType(TrainingTypeEnum.ECLASS, ele[TrainingTypeEnum.ECLASS].toString()) +
-//                     Utils.getScoreByTrainingType(TrainingTypeEnum.LiveTraining, ele[TrainingTypeEnum.LiveTraining].toString()) +
-//                     Utils.getScoreByTrainingType(TrainingTypeEnum.Webinar, ele[TrainingTypeEnum.Webinar].toString())
-//
-//                 const creditsPercentage = new Intl.NumberFormat('default', {
-//                     style: 'percent',
-//                     minimumFractionDigits: 2,
-//                     maximumFractionDigits: 2,
-//                 }).format(Math.min(credits, maxCredits));
-//
-//                 return {
-//                     ...ele,
-//                     credits: creditsPercentage,
-//                 }
-//             })
-//
-//             if(fileType === 1){
-//                 // ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇ Download Excel Start ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇
-//                 const formattedTrainingListStatsBySmIdWithCredits = trainingListStatsBySmIdWithCredits.reduce((acc: any, cur) => {
-//                     const {
-//                         smId,
-//                         smName,
-//                         ECLASS,
-//                         LiveTraining,
-//                         Webinar,
-//                         credits
-//                     } = cur
-//                     acc.push({
-//                         'Servicer ID': smId,
-//                         'Servicer Name': smName,
-//                         '# Appd.EClass': ECLASS,
-//                         '# Appd.Webinar': LiveTraining,
-//                         '# Appd.LiveTraining': Webinar,
-//                         '# Credits': credits
-//                     })
-//                     return acc
-//                 }, [])
-//                 const workbook = XLSX.utils.book_new()
-//                 const worksheet = XLSX.utils.json_to_sheet(formattedTrainingListStatsBySmIdWithCredits)
-//                 XLSX.utils.book_append_sheet(workbook, worksheet, "credits")
-//                 const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
-//                 return res.status(StatusCode.E200).send(excelBuffer)
-//                 // ⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆ Download Excel End ⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆
-//             }else if(fileType === 2){
-//                 // ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇ Download PDF Start ⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇
-//                 const myDoc: PDFKit.PDFDocument = new PDFDocument({bufferPages: true});
-//                 const buffers:any = []
-//
-//                 myDoc.on('data', buffers.push.bind(buffers))
-//                 myDoc.on('end', () => {
-//                     const pdfData = Buffer.concat(buffers);
-//                     res
-//                         .writeHead(200, {
-//                             'Content-Length': Buffer.byteLength(pdfData),
-//                             'Content-Type': 'application/pdf',
-//                             'Content-disposition': 'attachment;filename=test.pdf',
-//                         })
-//                         .end(pdfData)
-//                 })
-//
-//                 Utils.generatePDFHeader(myDoc)
-//                 Utils.generatePDFTable(myDoc, trainingListStatsBySmIdWithCredits)
-//                 Utils.generatePDFFooter(myDoc)
-//                 myDoc.end()
-//                 return
-//                 // ⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆ Download PDF End ⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆⬆
-//             }else{
-//                 const error = new Error(null, StatusCode.E400, Message.ErrParams)
-//                 return res.status(error.statusCode).send({
-//                     info: error.info,
-//                     message: error.message
-//                 })
-//             }
-//
-//         }catch(e){
-//             console.log(e.message)
-//             const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
-//             return res.status(error.statusCode).send({
-//                 info: error.info,
-//                 message: error.message
-//             })
-//         }
-//     }
-// }
-//
-// export default TrainingController
+import {Request as ExpReq, Response as ExpRes} from 'express'
+import Training from "../entities/Training";
+import {fiscalEndDate, TrainingStatusEnum, TrainingTypeEnum, UserRoleEnum} from "../enums/enums";
+import dataSource from "../data-source";
+import AppDataSource from "../data-source";
+import Error, {Message, StatusCode} from "../enums/Error";
+import Utils from "../utils/Utils";
+import {SelectQueryBuilder} from "typeorm";
+import {maxCredits, OrderByType} from "../utils/consts";
+import _ from "lodash";
+import Servicer from "../entities/ServicerMaster";
+import PDFDocument from 'pdfkit'
+import * as XLSX from 'xlsx'
+import ServicerMaster from "../entities/ServicerMaster";
+
+class TrainingController {
+    /**
+     * get all credits data with pagination, sorting, and search
+     * @param req
+     * @param res
+     */
+    static queryAllCredits = async (req: ExpReq, res: ExpRes) => {
+
+        const {searchKeyword, orderBy, order, page, limit} = req.query
+
+        const userRole = req.body.userRole
+
+        if (userRole === UserRoleEnum.SERVICER) {
+            const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
+            return res.status(200).send({
+                info: '',
+                message: error.message
+            })
+        }
+
+        console.table({searchKeyword, orderBy, order, page, limit})
+
+        if (!page || !limit || !orderBy || !order) {
+            const error = new Error(null, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
+        }
+
+        try {
+            const innerQuery: SelectQueryBuilder<Training> = AppDataSource
+                .getRepository(Training)
+                .createQueryBuilder('training')
+                .select([
+                    `(CASE WHEN MONTH(training.endDate) > 9 THEN YEAR(training.endDate) + 1 ELSE YEAR(training.endDate) END) AS fiscal_year`,
+                    `sm.id AS sm_id`,
+                    `sm.servicerMasterName AS sm_name`,
+                    `training.trainingType AS trainingType`,
+                    `(CASE WHEN training.trainingType = :live THEN 1 WHEN training.trainingType = :eclass THEN 2 WHEN training.trainingType = :webinar THEN 3 ELSE 0 END) AS trng_typ_id`,
+                    `SUM(training.hoursCount) AS total_trng_credit_hrs`,
+                    `COUNT(0) AS number_of_trng`,
+                    `(CASE WHEN (training.trainingType = :live AND SUM(training.hoursCount) > 0) THEN 0.50 WHEN (training.trainingType = :eclass AND SUM(training.hoursCount) > 0) THEN 0.50 WHEN (training.trainingType = :webinar AND SUM(training.hoursCount) > 0) THEN 0.20 END) AS trng_score`,
+                    `(CASE WHEN training.trainingName = 'Module #1 Servicing of FHA-Insured Mortgages and Default Servicing Requirements' THEN 1 ELSE 0 END) AS eclass_mandatroy_trng`,
+                ])
+                .innerJoin('training.servicerMaster', 'sm')
+                .where(`Training.trainingStatus = :trainingStatus`, {trainingStatus: TrainingStatusEnum.APPROVED})
+                .setParameter('live', TrainingTypeEnum.LiveTraining)
+                .setParameter('eclass', TrainingTypeEnum.ECLASS)
+                .setParameter('webinar', TrainingTypeEnum.Webinar)
+                .groupBy('fiscal_year')
+                .addGroupBy('sm_id')
+                .addGroupBy('sm_name')
+                .addGroupBy('trainingType')
+                .addGroupBy('training.trainingName')
+                .orderBy('fiscal_year')
+                .addOrderBy('sm_id')
+
+            const outerQuery = AppDataSource
+                .createQueryBuilder()
+                .select([
+                    `summary.fiscal_year AS fiscal_year`,
+                    `summary.sm_id AS sm_id`,
+                    `summary.sm_name AS sm_servicerMasterName`,
+                    `SUM(CASE WHEN (summary.trng_typ_id = 1 AND summary.number_of_trng > 0) THEN summary.number_of_trng ELSE 0 END) AS live_trng_cnt`,
+                    `SUM(CASE WHEN (summary.trng_typ_id = 1 AND summary.trng_score > 0) THEN (summary.trng_score * summary.number_of_trng) ELSE 0 END) AS live_trng_score`,
+                    `SUM(CASE WHEN (summary.trng_typ_id = 2 AND summary.number_of_trng > 0) THEN summary.number_of_trng ELSE 0 END) AS eclass_trng_cnt`,
+                    `SUM(CASE WHEN (summary.trng_typ_id = 2 AND summary.eclass_mandatroy_trng > 0) THEN summary.eclass_mandatroy_trng ELSE 0 END) AS eclass_mand_trng_cnt`,
+                    `(CASE WHEN SUM(CASE WHEN (summary.trng_typ_id = 2 AND summary.eclass_mandatroy_trng > 0) THEN summary.eclass_mandatroy_trng ELSE 0 END) > 0 THEN 0.5 ELSE 0 END) AS eclass_trng_score`,
+                    `SUM(CASE WHEN (summary.trng_typ_id = 3 AND summary.number_of_trng > 0) THEN summary.number_of_trng ELSE 0 END) AS webinar_trng_cnt`,
+                    `SUM(CASE WHEN (summary.trng_typ_id = 3 AND summary.trng_score > 0) THEN (summary.trng_score * summary.number_of_trng) ELSE 0 END) AS webinar_trng_score`,
+                    '((case when (((sum((case when ((`summary`.`trng_typ_id` = 1) and (`summary`.`trng_score` > 0)) then (`summary`.`trng_score` * `summary`.`number_of_trng`) else 0 end)) + (case when (sum((case when ((`summary`.`trng_typ_id` = 2) and (`summary`.`eclass_mandatroy_trng` > 0)) then `summary`.`eclass_mandatroy_trng` else 0 end)) > 0) then 0.5 else 0 end)) + sum((case when ((`summary`.`trng_typ_id` = 3) and (`summary`.`trng_score` > 0)) then (`summary`.`trng_score` * `summary`.`number_of_trng`) else 0 end))) > 1) then 1 else ((sum((case when ((`summary`.`trng_typ_id` = 1) and (`summary`.`trng_score` > 0)) then (`summary`.`trng_score` * `summary`.`number_of_trng`) else 0 end)) + (case when (sum((case when ((`summary`.`trng_typ_id` = 2) and (`summary`.`eclass_mandatroy_trng` > 0)) then `summary`.`eclass_mandatroy_trng` else 0 end)) > 0) then 0.5 else 0 end)) + sum((case when ((`summary`.`trng_typ_id` = 3) and (`summary`.`trng_score` > 0)) then (`summary`.`trng_score` * `summary`.`number_of_trng`) else 0 end))) end) / 100) AS `training_credit`'
+                ])
+                .from(`(${innerQuery.getQuery()})`, 'summary')
+                .setParameters(innerQuery.getParameters())
+                .groupBy('summary.fiscal_year')
+                .addGroupBy('summary.sm_id')
+                .addGroupBy('summary.sm_name')
+                .orderBy('summary.fiscal_year')
+                .addOrderBy('summary.sm_id')
+                .addOrderBy('summary.sm_name')
+
+
+            const {
+                sortByFieldName,
+                sortByOrder
+            } = Utils.getSortingMethod(orderBy as string, order as OrderByType, 'creditTable')
+
+            const startIndex = (+page - 1) * (+limit)
+
+
+            let paginationSearchingSortingQuery = dataSource
+                .createQueryBuilder()
+                .select([
+                    `outerQuery.fiscal_year`,
+                    `outerQuery.sm_id`,
+                    `outerQuery.sm_servicerMasterName`,
+                    `outerQuery.live_trng_cnt`,
+                    `outerQuery.live_trng_score`,
+                    `outerQuery.eclass_trng_cnt`,
+                    `outerQuery.eclass_mand_trng_cnt`,
+                    `outerQuery.eclass_trng_score`,
+                    `outerQuery.webinar_trng_cnt`,
+                    `outerQuery.webinar_trng_score`,
+                    `outerQuery.training_credit`,
+                ])
+                .from(`(${outerQuery.getQuery()})`, 'outerQuery')
+                .setParameters(outerQuery.getParameters())
+
+
+            if (searchKeyword) {
+                paginationSearchingSortingQuery = Utils.specifyColumnsToSearch(
+                    paginationSearchingSortingQuery,
+                    [
+                        'fiscal_year',
+                        'sm_id',
+                        'sm_servicerMasterName',
+                        'live_trng_cnt',
+                        'live_trng_score',
+                        'eclass_trng_cnt',
+                        'eclass_mand_trng_cnt',
+                        'eclass_trng_score',
+                        'webinar_trng_cnt',
+                        'webinar_trng_score',
+                        'training_credit',
+                    ],
+                    searchKeyword as string)
+            }
+
+
+            paginationSearchingSortingQuery
+                .skip(startIndex)
+                .take(+limit)
+
+
+            paginationSearchingSortingQuery
+                .orderBy(sortByFieldName, sortByOrder)
+
+            const [totalNumber, creditsStats] = await Promise.all([
+                dataSource
+                    .createQueryBuilder()
+                    .select(['COUNT(*) AS count'])
+                    .from(`(${outerQuery.getQuery()})`, 'outerQuery')
+                    .setParameters(outerQuery.getParameters())
+                    .getRawOne(),
+                paginationSearchingSortingQuery.getRawMany()
+            ])
+
+
+            const totalPage = Math.ceil(totalNumber.count / +limit)
+
+            return res.status(200).send({
+                userRole,
+                creditsStats,
+                totalPage
+            })
+
+
+        } catch (e) {
+            console.log(e.message)
+            const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
+        }
+    }
+
+}
+
+export default TrainingController

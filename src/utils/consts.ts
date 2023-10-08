@@ -6,6 +6,7 @@ export const logoUrl = 'src/asset/img/logo.png'
 
 
 export type TableHeadLabelType = {
+    // for training table
     'Training Name': string,
     'Training Type': string,
     'Trainee Email': string,
@@ -16,12 +17,25 @@ export type TableHeadLabelType = {
     'Training Status': string,
     'Submitted at': string,
     'Servicer ID': string,
-    'Servicer Name': string
+    'Servicer Name': string,
+
+    // for credit table
+    'Fiscal Year': string,
+    'Appd.LiveTraining': string,
+    'LiveTraining Credits': string,
+    'Appd.EClass': string,
+    'Appd.EClass (Mandatory)': string,
+    'EClass Credits': string,
+    'Appd.Webinar': string,
+    'Webinar Credits': string,
+    'Training Credits': string,
 }
 
 export type OrderByType = 'ASC' | 'DESC'
 
 export const tableHeadLabels: TableHeadLabelType = {
+
+    // for training table
     'Training Name': 'training_trainingName',
     'Training Type': 'CAST(training_trainingType AS CHAR)',
     'Trainee Email': 'user_email',
@@ -32,5 +46,26 @@ export const tableHeadLabels: TableHeadLabelType = {
     'Training Status': 'training_trainingStatus',
     'Submitted at': 'training_createdAt',
     'Servicer ID': 'sm_id',
-    'Servicer Name': 'sm_servicerMasterName'
+    'Servicer Name': 'sm_servicerMasterName',
+
+    // for credit table
+    'Fiscal Year': 'fiscal_year',
+    'Appd.LiveTraining': 'live_trng_cnt',
+    'LiveTraining Credits': 'live_trng_score',
+    'Appd.EClass': 'eclass_trng_cnt',
+    'Appd.EClass (Mandatory)': 'eclass_mand_trng_cnt',
+    'EClass Credits': 'eclass_trng_score',
+    'Appd.Webinar': 'webinar_trng_cnt',
+    'Webinar Credits': 'webinar_trng_score',
+    'Training Credits': 'training_credit',
+}
+
+export type defaultSortingFieldNameType = {
+    trainingTable: string,
+    creditTable: string,
+}
+
+export const defaultSortingFieldName: defaultSortingFieldNameType = {
+    trainingTable: 'training_createdAt',
+    creditTable: 'fiscalYear',
 }
