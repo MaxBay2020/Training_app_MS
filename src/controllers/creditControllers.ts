@@ -25,7 +25,7 @@ class TrainingController {
 
         const userRole = req.body.userRole
 
-        if (userRole === UserRoleEnum.SERVICER) {
+        if (userRole === UserRoleEnum.SERVICER || userRole === UserRoleEnum.SERVICER_COORDINATOR) {
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
             return res.status(200).send({
                 info: '',
@@ -33,7 +33,6 @@ class TrainingController {
             })
         }
 
-        console.table({searchKeyword, orderBy, order, page, limit})
 
         if (!page || !limit || !orderBy || !order) {
             const error = new Error(null, StatusCode.E400, Message.ErrParams)

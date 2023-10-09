@@ -164,6 +164,16 @@ class TrainingController {
                 .orderBy(sortByFieldName, sortByOrder)
 
 
+            if(userRole === UserRoleEnum.APPROVER){
+                subQueryWithFilteredTrainingStatus
+                    .select()
+                    .where('training.trainingStatus <> :value', { value :TrainingStatusEnum.CANCELED })
+            }else{
+                subQueryWithFilteredTrainingStatus
+                    .select()
+            }
+
+
             if(searchKeyword){
                 if(userRole === UserRoleEnum.SERVICER){
                     subQueryWithFilteredTrainingStatus = Utils.specifyColumnsToSearch(
@@ -215,18 +225,9 @@ class TrainingController {
                             'sm.servicerMasterName'
                         ],
                         searchKeyword as string)
-
                 }
             }
 
-            if(userRole === UserRoleEnum.APPROVER){
-                subQueryWithFilteredTrainingStatus
-                    .select()
-                    .where('training.trainingStatus <> :value', { value :TrainingStatusEnum.CANCELED })
-            }else{
-                subQueryWithFilteredTrainingStatus
-                    .select()
-            }
 
             const totalNumber: number = await subQueryWithFilteredTrainingStatus.getCount() as number
 

@@ -327,6 +327,20 @@ class Utils {
             .lineTo(endX, y)
             .stroke();
     }
+
+
+    /***
+     * convert string number to percentage
+     * @param num
+     */
+    static convertToPercentage = (num: number): string => {
+        return new Intl.NumberFormat('default', {
+            style: 'percent',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(+num)
+    }
+
 }
 
 export default Utils
