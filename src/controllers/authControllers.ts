@@ -8,6 +8,8 @@ import {validate} from "class-validator"
 import bcrypt from 'bcrypt'
 import dataSource from "../data-source";
 import {UserWithDetails} from "../utils/dataType";
+import UserRole from "../entities/UserRole";
+import {UserRoleEnum} from "../enums/enums";
 
 
 class AuthControllers {
@@ -24,25 +26,55 @@ class AuthControllers {
 
         try {
 
-            const user: UserWithDetails = await AppDataSource
-                .getRepository(User)
-                .createQueryBuilder('user')
-                .leftJoin('user.servicer', 'servicerMaster')
-                .innerJoinAndSelect('user.userRole', 'userRole')
-                .select([
-                    'user.email AS email',
-                    'user.password AS password',
-                    'user.firstName AS firstName',
-                    'CONCAT_WS(" ", user.firstName, user.lastName) AS userName',
-                    'user.servicerId',
-                    'servicerMaster.servicerMasterName AS servicerMasterName',
-                    'userRole.userRoleName AS userRole'
-                ])
-                .where('email = :email', { email })
-                .getRawOne() as UserWithDetails
+            // const user: UserWithDetails[] = await AppDataSource
+            //     .getRepository(User)
+            //     .createQueryBuilder('user')
+            //     .leftJoin('user.servicer', 'servicerMaster')
+            //     .innerJoinAndSelect('user.userRole', 'userRole')
+            //     .select([
+            //         'user.email AS email',
+            //         'user.password AS password',
+            //         'user.firstName AS firstName',
+            //         'CONCAT_WS(" ", user.firstName, user.lastName) AS userName',
+            //         'user.servicerId',
+            //         'servicerMaster.servicerMasterName AS servicerMasterName',
+            //         'userRole.userRoleName AS userRole'
+            //     ])
+            //     .where('email = :email', { email })
+            //     .orWhere('userRole.userRoleName = :userRole', { userRole: UserRoleEnum.SERVICER_COORDINATOR })
+            //     .getRawMany() as UserWithDetails[]
 
+            const [loggedInUser, servicerCoordinator] = await Promise.all([
+                AppDataSource
+                    .getRepository(User)
+                    .createQueryBuilder('user')
+                    .leftJoin('user.servicer', 'servicerMaster')
+                    .innerJoinAndSelect('user.userRole', 'userRole')
+                    .select([
+                        'user.email AS email',
+                        'user.password AS password',
+                        'user.firstName AS firstName',
+                        'CONCAT_WS(" ", user.firstName, user.lastName) AS userName',
+                        'user.servicerId',
+                        'servicerMaster.servicerMasterName AS servicerMasterName',
+                        'userRole.userRoleName AS userRole'
+                    ])
+                    .where('email = :email', { email })
+                    .getRawOne(),
 
-            if(!user){
+                AppDataSource
+                    .getRepository(User)
+                    .createQueryBuilder('user')
+                    .leftJoin('user.servicer', 'servicerMaster')
+                    .innerJoinAndSelect('user.userRole', 'userRole')
+                    .select([
+                        'CONCAT_WS(" ", user.firstName, user.lastName) AS userName',
+                    ])
+                    .where('userRole.userRoleName = :userRole', { userRole: UserRoleEnum.SERVICER_COORDINATOR })
+                    .getRawOne()
+            ])
+
+            if(!loggedInUser){
                 const error = new Error(null, StatusCode.E404, Message.ErrFind)
                 return res.status(error.statusCode).send({
                     info: '',
@@ -50,8 +82,7 @@ class AuthControllers {
                 })
             }
 
-
-            const hash = user.password
+            const hash = loggedInUser.password
             const isCorrect = await bcrypt.compare(password, hash)
 
             if(!isCorrect){
@@ -63,19 +94,20 @@ class AuthControllers {
             }
 
             const token = jwt.sign({
-                email: user.email,
+                email: loggedInUser.email,
             }, process.env.JWT_ACCESS_TOKEN_SCRET as string, {
                 expiresIn: access_token_expiresIn
             })
 
-            const { userName, userRole, servicerId, servicerMasterName } = user
+            const { userName, userRole, servicerId, servicerMasterName } = loggedInUser
             return res.status(StatusCode.E200).send({
                 accessToken: token,
                 userName,
                 userEmail: email,
                 userRole,
                 servicerId,
-                servicerMasterName
+                servicerMasterName,
+                servicerCoordinator: servicerCoordinator.userName
             })
         }catch (e) {
             console.log(e.message)
