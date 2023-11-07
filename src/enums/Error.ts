@@ -6,6 +6,7 @@ export enum StatusCode {
     E403 = 403, // email or password NOT correct
     E404 = 404, // resources NOT found,
     E405 = 405, // need to refresh,
+    E406 = 406, // resource has existed,
     E500 = 500  // there is something wrong with server, please try again later
 }
 
@@ -23,7 +24,8 @@ export enum Message {
     VerifyCodeErr = 'Verify code expired or not correct',
     ServerError = 'There is something wrong with server, please try again later',
     LogoutError = 'Logout error, please try again later',
-    RefreshPage = 'Resources changed, please refresh the page'
+    RefreshPage = 'Resources changed, please refresh the page',
+    HasExisted = 'Resources have existed'
 }
 
 class Error<T> {

@@ -69,3 +69,9 @@ export const defaultSortingFieldName: defaultSortingFieldNameType = {
     trainingTable: 'training_createdAt',
     creditTable: 'fiscalYear',
 }
+
+export type traineeType = {
+    traineeEmail: string,
+    traineeFirstName: string,
+    traineeLastName: string
+}

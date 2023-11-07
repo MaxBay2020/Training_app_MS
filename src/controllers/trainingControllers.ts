@@ -9,7 +9,7 @@ import Utils from "../utils/Utils";
 import {In, Repository, SelectQueryBuilder} from "typeorm";
 import AppDataSource from "../data-source";
 import Servicer from "../entities/ServicerMaster";
-import {maxCredits, OrderByType} from "../utils/consts";
+import {maxCredits, OrderByType, traineeType} from "../utils/consts";
 import EClass from "../entities/EClass";
 import {Trainee} from "../utils/dataType";
 import moment from "moment";
@@ -347,6 +347,7 @@ class TrainingController {
         } = req.body
 
 
+
         if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate || new Date(endDate) > new Date()){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
@@ -357,6 +358,30 @@ class TrainingController {
 
 
         try{
+            const queryDuplicates = await Promise.all(traineeList.map((trainee: traineeType) => {
+                return dataSource.getRepository(Training)
+                    .createQueryBuilder('training')
+                    .innerJoinAndSelect('training.trainee', 'user')
+                    .select(['user.email'])
+                    .where('training.trainingType = :trainingType', { trainingType })
+                    .andWhere('training.trainingName = :trainingName', { trainingName })
+                    .andWhere('user.email = :email', { email: trainee.traineeEmail })
+                    .getRawOne()
+            }))
+
+            const duplicatedItems = queryDuplicates.filter(item => item)
+            if(duplicatedItems.length !== 0){
+                const error = new Error(null, StatusCode.E406, Message.HasExisted)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message,
+                    duplicates: duplicatedItems.map(item => item.user_email)
+                })
+            }
+
+
+
+
             const user: User =  await dataSource.getRepository(User)
                 .createQueryBuilder('user')
                 .innerJoinAndSelect('user.userRole', 'userRole')
