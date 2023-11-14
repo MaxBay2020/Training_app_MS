@@ -3,6 +3,7 @@ import trainingRouters from "./trainingRoutes";
 import authRouters from "./authRoutes";
 import downloadRouters from "./downloadRouters";
 import creditRouters from "./creditsRoutes";
+import adminRouters from "./adminRouters";
 
 const indexRoutes = Router()
 
@@ -10,6 +11,7 @@ indexRoutes.use('/training', trainingRouters)
 indexRoutes.use('/auth', authRouters)
 indexRoutes.use('/credit', creditRouters)
 indexRoutes.use('/download', downloadRouters)
+indexRoutes.use('/admin', adminRouters)
 
 
 

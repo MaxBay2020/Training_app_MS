@@ -29,6 +29,14 @@ export type TableHeadLabelType = {
     'Appd.Webinar': string,
     'Webinar Credits': string,
     'Training Credits': string,
+
+    // for user table
+    'First Name': string,
+    'Last Name': string,
+    'email': string,
+    'User Role': string,
+    'Created At': string,
+    'Updated At': string,
 }
 
 export type OrderByType = 'ASC' | 'DESC'
@@ -48,6 +56,13 @@ export const tableHeadLabels: TableHeadLabelType = {
     'Servicer ID': 'sm_id',
     'Servicer Name': 'sm_servicerMasterName',
 
+    'First Name': 'user_firstName',
+    'Last Name': 'user_lastName',
+    'email': 'user_email',
+    'User Role': 'userRole_userRoleName',
+    'Created At': 'user_createdAt',
+    'Updated At': 'user_updatedAt',
+
     // for credit table
     'Fiscal Year': 'fiscal_year',
     'Appd.LiveTraining': 'live_trng_cnt',
@@ -63,11 +78,13 @@ export const tableHeadLabels: TableHeadLabelType = {
 export type defaultSortingFieldNameType = {
     trainingTable: string,
     creditTable: string,
+    userTable: string
 }
 
 export const defaultSortingFieldName: defaultSortingFieldNameType = {
     trainingTable: 'training_createdAt',
     creditTable: 'fiscalYear',
+    userTable: 'user_createAt'
 }
 
 export type traineeType = {

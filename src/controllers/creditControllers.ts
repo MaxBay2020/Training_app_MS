@@ -27,7 +27,7 @@ class TrainingController {
 
         if (userRole === UserRoleEnum.SERVICER || userRole === UserRoleEnum.SERVICER_COORDINATOR) {
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
-            return res.status(200).send({
+            return res.status(error.statusCode).send({
                 info: '',
                 message: error.message
             })

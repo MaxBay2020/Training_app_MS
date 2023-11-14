@@ -57,6 +57,11 @@ class User extends BaseClass {
     @OneToMany(() => Training, training => training.updatedBy)
     updatedTrainings: Training[]
 
+    @OneToMany(() => User, user => user.createBy)
+    children: User[]
+
+    @ManyToOne(() => User, user => user.children)
+    createBy: User
 }
 
 export default User

@@ -15,7 +15,6 @@ import {UserRoleEnum} from "../enums/enums";
 class AuthControllers {
     static loginUser = async (req: ExpReq, res: ExpRes) => {
         const { email, password } = req.body
-
         if(!email || !password){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
@@ -73,7 +72,7 @@ class AuthControllers {
                     .where('userRole.userRoleName = :userRole', { userRole: UserRoleEnum.SERVICER_COORDINATOR })
                     .getRawOne()
             ])
-
+            console.log(loggedInUser)
             if(!loggedInUser){
                 const error = new Error(null, StatusCode.E404, Message.ErrFind)
                 return res.status(error.statusCode).send({
@@ -107,7 +106,7 @@ class AuthControllers {
                 userRole,
                 servicerId,
                 servicerMasterName,
-                servicerCoordinator: servicerCoordinator.userName
+                servicerCoordinator: servicerCoordinator ? servicerCoordinator.userName : ''
             })
         }catch (e) {
             console.log(e.message)
