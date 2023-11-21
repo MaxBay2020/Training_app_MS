@@ -154,6 +154,19 @@ class userController {
             subQueryWithFilteredUserStatus
                 .orderBy(sortByFieldName, sortByOrder)
 
+            subQueryWithFilteredUserStatus
+                .select([
+                    'user.id',
+                    'user.firstName',
+                    'user.lastName',
+                    'user.createdAt',
+                    'user.updatedAt',
+                    'user.email',
+                    'userRole.userRoleName',
+                    'sm.id',
+                    'sm.servicerMasterName',
+                ])
+
 
             if(searchKeyword){
                 subQueryWithFilteredUserStatus = Utils.specifyColumnsToSearch(
