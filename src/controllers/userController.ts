@@ -14,100 +14,12 @@ import EClass from "../entities/EClass";
 import {Trainee} from "../utils/dataType";
 import moment from "moment";
 import UserRole from "../entities/UserRole";
+import ServicerMaster from "../entities/ServicerMaster";
 
 
 class userController {
-
-    static queryAllTrainingCredits = async (req: ExpReq, res: ExpRes) => {
-        const { userRole, email, servicerMasterId } = req.body
-        if(userRole !== UserRoleEnum.SERVICER && userRole !== UserRoleEnum.SERVICER_COORDINATOR){
-            const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
-            return res.status(StatusCode.E200).send({
-                info: '',
-                message: error.message
-            })
-        }
-
-        try{
-            const { currentFiscalStartTime, currentFiscalEndTime } = Utils.getCurrentFiscalTimeRange(fiscalEndDate.month, fiscalEndDate.date)
-
-            const approvedTrainingCount: number = await AppDataSource
-                .getRepository(Training)
-                .createQueryBuilder('training')
-                .innerJoinAndSelect('training.trainee', 'user', 'user.email = :email', { email })
-                .where('training.trainingStatus = :trainingStatus', { trainingStatus: TrainingStatusEnum.APPROVED })
-                .andWhere(':currentFiscalStartTime < training.startDate < :currentFiscalEndTime', {
-                    currentFiscalStartTime,
-                    currentFiscalEndTime
-                })
-                .getCount() as number
-
-
-            // subquery for stats: remove duplicates
-            const distinctTrainingByTrainingName :SelectQueryBuilder<Training> = AppDataSource
-                .getRepository(Training)
-                .createQueryBuilder('training')
-                .innerJoin('training.servicerMaster', 'servicerMaster',
-                    'servicerMaster.id = :servicerMasterId', {servicerMasterId})
-                .select(['DISTINCT training.trainingName, training.trainingType'])
-                .where('training.trainingStatus = :trainingStatus', {trainingStatus: TrainingStatusEnum.APPROVED})
-                .andWhere(':currentFiscalStartTime < training.startDate AND training.startDate < :currentFiscalEndTime', {
-                    currentFiscalStartTime,
-                    currentFiscalEndTime
-                })
-
-            const approvedTrainingByServicerCount = await AppDataSource
-                .createQueryBuilder()
-                .select(['COUNT(*) AS total', 'subtable.trainingType AS trainingType'])
-                .from(`(${distinctTrainingByTrainingName.getQuery()})`, 'subtable')
-                .setParameters(distinctTrainingByTrainingName.getParameters())
-                .groupBy('subtable.trainingType')
-                .getRawMany()
-
-            const totalApprovedTrainingCount = approvedTrainingByServicerCount.reduce((acc, cur) => {
-                return acc + (+cur.total)
-            }, 0)
-
-
-            const totalScores: number = approvedTrainingByServicerCount.reduce((acc, cur) => {
-                return acc + Utils.getScoreByTrainingType(cur.trainingType, cur.total)
-            }, 0)
-
-            const scorePercentage = new Intl.NumberFormat('default', {
-                style: 'percent',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            }).format(Math.min(totalScores, maxCredits));
-
-            return res.status(StatusCode.E200).send({
-                approvedTrainingCount,
-                totalApprovedTrainingCount,
-                // scorePercentage
-            })
-        }catch (e) {
-            console.log(e.message)
-            const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
-            return res.status(error.statusCode).send({
-                info: error.info,
-                message: error.message
-            })
-        }
-
-    }
-
     /**
-     * query all training types
-     * @param req
-     * @param res
-     */
-    static queryAllTrainingTypes = async (req: ExpReq, res: ExpRes) => {
-        const allTrainingTypes = Object.values(TrainingTypeEnum).filter(trainingType => trainingType !== TrainingTypeEnum.ECLASS)
-        return res.status(StatusCode.E200).send(allTrainingTypes)
-    }
-
-
-    /**
-     * get all training data with pagination, sorting, and search
+     * get all users with pagination, sorting, and search
      * @param req
      * @param res
      */
@@ -162,6 +74,8 @@ class userController {
                     'user.createdAt',
                     'user.updatedAt',
                     'user.email',
+                    'user.isDelete',
+                    'userRole.id',
                     'userRole.userRoleName',
                     'sm.id',
                     'sm.servicerMasterName',
@@ -212,83 +126,33 @@ class userController {
         }
     }
 
+
     /**
-     * get training by trainingId
+     * create user
      * @param req
      * @param res
      */
-    static queryTrainingById = async (req: ExpReq, res: ExpRes) => {
-        const { email } = req.body
-        const { trainingId } = req.params
+    static createUser = async (req: ExpReq, res: ExpRes) => {
+        const {
+            firstName,
+            lastName,
+            newUserEmail,
+            userRoleId,
+            servicerId
+        } = req.body
 
-        if(!email || !trainingId){
-            const error = new Error(null, StatusCode.E400, Message.ErrParams)
+        const { email, userRole } = req.body
+
+        if(userRole !== UserRoleEnum.ADMIN){
+            const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
             return res.status(error.statusCode).send({
                 info: '',
                 message: error.message
             })
         }
 
-        // query training by trainingId from db
-        try {
-            const user: User =  await dataSource.getRepository(User)
-                .createQueryBuilder('user')
-                .where('user.email = :email', { email })
-                .getOne() as User
 
-            if(!user){
-                const error = new Error(null, StatusCode.E404, Message.ErrFind)
-                return res.status(error.statusCode).send({
-                    info: '',
-                    message: error.message
-                })
-            }
-
-            const training: Training =  await dataSource.getRepository(Training)
-                .createQueryBuilder('training')
-                .where('training.id = :trainingId', { trainingId })
-                .getOne() as Training
-
-            if(!training){
-                const error = new Error(null, StatusCode.E404, Message.ErrFind)
-                return res.status(error.statusCode).send({
-                    info: '',
-                    message: error.message
-                })
-            }
-
-            return res.status(StatusCode.E200).send(training)
-        }catch(e){
-            console.log(e.message)
-            const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
-            return res.status(error.statusCode).send({
-                info: error.info,
-                message: error.message
-            })
-        }
-    }
-
-    /**
-     * create training
-     * @param req
-     * @param res
-     */
-    static createTraining = async (req: ExpReq, res: ExpRes) => {
-        const {
-            trainingName,
-            email,
-            userRole,
-            trainingType,
-            startDate,
-            endDate,
-            hoursCount,
-            trainingURL,
-            traineeList
-        } = req.body
-
-
-
-        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate || new Date(endDate) > new Date()){
+        if(!firstName || !lastName || !newUserEmail || !userRoleId || !servicerId){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
                 info: error.info,
@@ -298,168 +162,65 @@ class userController {
 
 
         try{
-            const queryDuplicates = await Promise.all(traineeList.map((trainee: traineeType) => {
-                return dataSource.getRepository(Training)
-                    .createQueryBuilder('training')
-                    .innerJoinAndSelect('training.trainee', 'user')
-                    .select(['user.email'])
-                    .where('training.trainingType = :trainingType', { trainingType })
-                    .andWhere('training.trainingName = :trainingName', { trainingName })
-                    .andWhere('user.email = :email', { email: trainee.traineeEmail })
-                    .getRawOne()
-            }))
+            const [userRole, servicer, user, loggedInUser] = await Promise.all([
+                dataSource.getRepository(UserRole)
+                    .createQueryBuilder('userRole')
+                    .where('userRole.id = :userRoleId', { userRoleId })
+                    .getOne(),
+                dataSource.getRepository(ServicerMaster)
+                    .createQueryBuilder('sm')
+                    .where('sm.id = :servicerId', { servicerId })
+                    .getOne(),
+                dataSource.getRepository(User)
+                    .createQueryBuilder('user')
+                    .where('user.email = :newUserEmail', { newUserEmail })
+                    .getOne(),
+                dataSource.getRepository(User)
+                    .createQueryBuilder('user')
+                    .where('user.email = :email', { email })
+                    .getOne(),
+            ])
 
-            const duplicatedItems = queryDuplicates.filter(item => item)
-            if(duplicatedItems.length !== 0){
+            if(!userRole || !servicer || !loggedInUser){
+                const error = new Error(null, StatusCode.E404, Message.ErrFind)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message
+                })
+            }
+
+            if(user){
                 const error = new Error(null, StatusCode.E406, Message.HasExisted)
                 return res.status(error.statusCode).send({
                     info: '',
                     message: error.message,
-                    duplicates: duplicatedItems.map(item => item.user_email)
                 })
             }
 
 
+            const newUser: User = User.create({
+                firstName,
+                lastName,
+                email: newUserEmail,
+                userRole,
+                servicer,
+                createdBy: loggedInUser,
+                updatedBy: loggedInUser
+            }) as User
 
 
-            const user: User =  await dataSource.getRepository(User)
-                .createQueryBuilder('user')
-                .innerJoinAndSelect('user.userRole', 'userRole')
-                .innerJoinAndSelect('user.servicer', 'servicerMaster')
-                .where('user.email = :email', { email })
-                .getOne() as User
 
-            if(!user){
-                const error = new Error(null, StatusCode.E404, Message.ErrFind)
+            const errors = await validate(newUser)
+            if(errors.length > 0){
+                console.log(errors)
+                const error = new Error(null, StatusCode.E400, Message.ErrParams)
                 return res.status(error.statusCode).send({
                     info: '',
                     message: error.message
                 })
             }
 
-
-            if(userRole !== UserRoleEnum.SERVICER && userRole !== UserRoleEnum.SERVICER_COORDINATOR){
-                const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
-                return res.status(error.statusCode).send({
-                    info: '',
-                    message: error.message
-                })
-            }
-
-            const { servicer: servicerMaster } = user
-
-            const trainingStatus =
-                trainingType === TrainingTypeEnum.ECLASS ?
-                    TrainingStatusEnum.APPROVED : TrainingStatusEnum.SUBMITTED
-
-            if(userRole === UserRoleEnum.SERVICER){
-                const newTraining: Training = Training.create({
-                    trainingName,
-                    trainingType,
-                    startDate,
-                    endDate,
-                    hoursCount,
-                    trainingURL,
-                    user,
-                    trainingStatus,
-                    servicerMaster,
-                    updatedBy: user,
-                    trainee: user
-                }) as Training
-
-                const errors = await validate(newTraining)
-                if(errors.length > 0){
-                    console.log(errors)
-                    const error = new Error(null, StatusCode.E400, Message.ErrParams)
-                    return res.status(error.statusCode).send({
-                        info: '',
-                        message: error.message
-                    })
-                }
-
-                await newTraining.save()
-            }
-
-            if(userRole === UserRoleEnum.SERVICER_COORDINATOR){
-                let userList: User[] = await Promise.all(traineeList.map((item: Trainee) => {
-                    const { traineeEmail } = item
-
-                    return dataSource
-                        .getRepository(User)
-                        .createQueryBuilder('user')
-                        .innerJoinAndSelect('user.servicer', 'sm')
-                        .where('user.email = :traineeEmail', { traineeEmail })
-                        .andWhere('sm.id = :servicerId', { servicerId: user.servicer.id })
-                        .getOne()
-                }))
-
-                userList = userList.filter((user: User) => user)
-
-                if(userList.length !== traineeList.length){
-                    // if there are some users NOT exist in db
-                    const userEmailList = userList.map((trainee: User) => trainee.email)
-                    const traineeListToBeSaved = traineeList.filter((trainee: Trainee) => !userEmailList.includes(trainee.traineeEmail))
-                    const userToBeRegistered: User[] = []
-                    const validateErrors = await Promise.all(traineeListToBeSaved.map((traineeToBeSaved: Trainee) => {
-                        const { traineeEmail, traineeFirstName, traineeLastName } = traineeToBeSaved
-                        const traineeUser: User = User.create({
-                            email: traineeEmail,
-                            firstName: traineeFirstName,
-                            lastName: traineeLastName,
-                            servicer: user.servicer
-                        })
-                        userToBeRegistered.push(traineeUser)
-                        return validate(traineeUser)
-                    }))
-
-                    if(validateErrors.flat().length > 0){
-                        console.log(validateErrors)
-                        const error = new Error(null, StatusCode.E400, Message.ErrParams)
-                        return res.status(error.statusCode).send({
-                            info: '',
-                            message: error.message
-                        })
-                    }
-                    userList.push(...userToBeRegistered)
-
-                    // save users in db
-                    await dataSource
-                        .createQueryBuilder()
-                        .insert()
-                        .into(User)
-                        .values(userToBeRegistered)
-                        .execute()
-                }
-
-                // TODO: save trainings for these trainees
-                await Promise.all(userList.map(async (trainee: User) => {
-                    const newTraining: Training = Training.create({
-                        trainingName,
-                        trainingType,
-                        startDate,
-                        endDate,
-                        hoursCount,
-                        trainingURL,
-                        user,
-                        trainingStatus,
-                        servicerMaster,
-                        updatedBy: user,
-                        trainee
-                    }) as Training
-
-                    const errors = await validate(newTraining)
-                    if(errors.length > 0){
-                        console.log(errors)
-                        const error = new Error(null, StatusCode.E400, Message.ErrParams)
-                        return res.status(error.statusCode).send({
-                            info: '',
-                            message: error.message
-                        })
-                    }
-
-                    return newTraining.save()
-                }))
-            }
+            await newUser.save()
 
 
             return res.status(StatusCode.E200).send({
@@ -478,111 +239,24 @@ class userController {
     }
 
     /**
-     * update training
+     * update user
      * @param req
      * @param res
      */
-    static updateTrainingById = async (req: ExpReq, res: ExpRes) => {
-        const { email, userRole, trainingName, trainingType, startDate, endDate, hoursCount, trainingURL } = req.body
-        const { trainingId } = req.params
+    static updateUserByUserId = async (req: ExpReq, res: ExpRes) => {
+        const {
+            firstName,
+            lastName,
+            updateUserEmail,
+            userRoleId,
+            servicerId
+        } = req.body
 
-        if(!trainingName || !email || !trainingType || !startDate || !endDate || !hoursCount || startDate > endDate || new Date(endDate) > new Date()){
-            const error = new Error(null, StatusCode.E400, Message.ErrParams)
-            return res.status(error.statusCode).send({
-                info: error.info,
-                message: error.message
-            })
-        }
-
-        if(userRole === UserRoleEnum.ADMIN){
-            const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
-            return res.status(error.statusCode).send({
-                info: '',
-                message: error.message
-            })
-        }
-
-        if(!trainingId){
-            const error = new Error(null, StatusCode.E400, Message.ErrParams)
-            return res.status(error.statusCode).send({
-                info: '',
-                message: error.message
-            })
-        }
-
-        const updatedTraining = Training.create({trainingName, trainingType, startDate, endDate, hoursCount, trainingURL})
-        const errors = await validate(updatedTraining, {
-            skipMissingProperties: true
-        })
-        if(errors.length > 0){
-            console.log(errors)
-            const error = new Error(null, StatusCode.E400, Message.ErrParams)
-            return res.status(error.statusCode).send({
-                info: '',
-                message: error.message
-            })
-        }
-
-        try{
-            const [training, updatedBy] = await Promise.all([
-                dataSource.getRepository(Training)
-                    .createQueryBuilder('training')
-                    .innerJoinAndSelect('training.trainee', 'user')
-                    .where('training.id = :trainingId', { trainingId })
-                    // .andWhere('user.email = :email', { email })
-                    .getRawOne(),
-                dataSource.getRepository(User).findOneBy( { email } )
-            ])
-
-
-            if(!training){
-                const error = new Error(null, StatusCode.E404, Message.ErrFind)
-                return res.status(error.statusCode).send({
-                    info: '',
-                    message: error.message
-                })
-            }
-
-            if(training.training_trainingStatus !== TrainingStatusEnum.SUBMITTED){
-                const error = new Error(null, StatusCode.E405, Message.RefreshPage)
-                return res.status(error.statusCode).send({
-                    info: '',
-                    message: error.message
-                })
-            }
-
-            await dataSource
-                .createQueryBuilder()
-                .update(Training)
-                .set({trainingName, trainingType, startDate, endDate, hoursCount, trainingURL, updatedBy})
-                .where('id = :trainingId', {trainingId})
-                .execute()
-
-            return res.status(StatusCode.E200).send({
-                info: '',
-                message: Message.OK
-            })
-
-        }catch (e) {
-            console.log(e.message)
-            const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
-            return res.status(error.statusCode).send({
-                info: error.info,
-                message: error.message
-            })
-        }
-    }
-
-    /**
-     * withdraw training by trainingId
-     * @param req
-     * @param res
-     */
-    static deleteTrainingById = async (req: ExpReq, res: ExpRes) => {
         const { email, userRole } = req.body
-        const { trainingId } = req.params
 
-        if(userRole === UserRoleEnum.ADMIN || userRole === UserRoleEnum.APPROVER ){
+        const { userId } = req.params
+
+        if(userRole !== UserRoleEnum.ADMIN){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
             return res.status(error.statusCode).send({
                 info: '',
@@ -590,7 +264,17 @@ class userController {
             })
         }
 
-        if(!trainingId){
+        if(!firstName || !lastName || !updateUserEmail || !userRoleId || !servicerId){
+            const error = new Error(null, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: error.info,
+                message: error.message
+            })
+        }
+
+
+
+        if(!userId){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
                 info: '',
@@ -598,19 +282,32 @@ class userController {
             })
         }
 
+
         try{
-            const [training, updatedBy] = await Promise.all([
-                dataSource.getRepository(Training)
-                    .createQueryBuilder('training')
-                    .innerJoinAndSelect('training.trainee', 'user')
-                    .where('training.id = :trainingId', { trainingId })
-                    // .andWhere('user.email = :email', { email })
-                    .getRawOne(),
-                dataSource.getRepository(User).findOneBy( { email } )
+            const [userRole, servicer, userByEmail, userByUserId, loggedInUser] = await Promise.all([
+                dataSource.getRepository(UserRole)
+                    .createQueryBuilder('userRole')
+                    .where('userRole.id = :userRoleId', { userRoleId })
+                    .getOne(),
+                dataSource.getRepository(ServicerMaster)
+                    .createQueryBuilder('sm')
+                    .where('sm.id = :servicerId', { servicerId })
+                    .getOne(),
+                dataSource.getRepository(User)
+                    .createQueryBuilder('user')
+                    .where('user.email = :updateUserEmail', { updateUserEmail })
+                    .getOne(),
+                dataSource.getRepository(User)
+                    .createQueryBuilder('user')
+                    .where('user.id = :userId', { userId })
+                    .getOne(),
+                dataSource.getRepository(User)
+                    .createQueryBuilder('user')
+                    .where('user.email = :email', { email })
+                    .getOne(),
             ])
 
-
-            if(!training){
+            if(!userRole || !servicer || !loggedInUser || !userByUserId){
                 const error = new Error(null, StatusCode.E404, Message.ErrFind)
                 return res.status(error.statusCode).send({
                     info: '',
@@ -618,8 +315,29 @@ class userController {
                 })
             }
 
-            if(training.training_trainingStatus !== TrainingStatusEnum.SUBMITTED){
-                const error = new Error(null, StatusCode.E405, Message.RefreshPage)
+            if(userByEmail){
+                const error = new Error(null, StatusCode.E406, Message.HasExisted)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message,
+                })
+            }
+
+            const userToUpdate: User = User.create({
+                firstName,
+                lastName,
+                email: updateUserEmail,
+                userRole,
+                servicer,
+                updatedBy: loggedInUser
+            }) as User
+
+            const errors = await validate(userToUpdate, {
+                skipMissingProperties: true
+            })
+            if(errors.length > 0){
+                console.log(errors)
+                const error = new Error(null, StatusCode.E400, Message.ErrParams)
                 return res.status(error.statusCode).send({
                     info: '',
                     message: error.message
@@ -628,9 +346,9 @@ class userController {
 
             await dataSource
                 .createQueryBuilder()
-                .update(Training)
-                .set({trainingStatus: TrainingStatusEnum.CANCELED, updatedBy})
-                .where('id = :trainingId', {trainingId})
+                .update(User)
+                .set(userToUpdate)
+                .where('id = :userId', { userId })
                 .execute()
 
             return res.status(StatusCode.E200).send({
@@ -648,9 +366,18 @@ class userController {
         }
     }
 
-    static updateTrainingStatusByIds = async (req: ExpReq, res: ExpRes) => {
-        const { trainingIds, approveOrReject, userRole, email } = req.body
-        if(userRole !== UserRoleEnum.APPROVER){
+
+    /**
+     * update user
+     * @param req
+     * @param res
+     */
+    static deleteUserByUserId = async (req: ExpReq, res: ExpRes) => {
+        const { email, userRole } = req.body
+
+        const { userId } = req.params
+
+        if(userRole !== UserRoleEnum.ADMIN){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
             return res.status(error.statusCode).send({
                 info: '',
@@ -658,16 +385,22 @@ class userController {
             })
         }
 
-        try {
-            const [approverUser, trainingsList]= await Promise.all([
-                dataSource.getRepository(User).findOneBy( { email } ),
-                dataSource
-                    .getRepository(Training)
-                    .findBy({ id: In(trainingIds)})
-            ])
+        if(!userId){
+            const error = new Error(null, StatusCode.E400, Message.ErrParams)
+            return res.status(error.statusCode).send({
+                info: '',
+                message: error.message
+            })
+        }
 
 
-            if(trainingsList.length !== trainingIds.length || !approverUser){
+        try{
+            const loggedInUser = await dataSource.getRepository(User)
+                    .createQueryBuilder('user')
+                    .where('user.email = :email', { email })
+                    .getOne()
+
+            if(!loggedInUser){
                 const error = new Error(null, StatusCode.E404, Message.ErrFind)
                 return res.status(error.statusCode).send({
                     info: '',
@@ -675,17 +408,20 @@ class userController {
                 })
             }
 
-            trainingsList.forEach( training => {
-                training.trainingStatus = approveOrReject
-                training.operatedBy = approverUser
-            })
-
-            await Promise.all(trainingsList.map(training => training.save()))
+            await dataSource
+                .createQueryBuilder()
+                .update(User)
+                .set({
+                    isDelete: true
+                })
+                .where('id = :userId', { userId })
+                .execute()
 
             return res.status(StatusCode.E200).send({
                 info: '',
                 message: Message.OK
             })
+
         }catch (e) {
             console.log(e.message)
             const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
@@ -696,44 +432,6 @@ class userController {
         }
     }
 
-    /**
-     * query all data from eClass table
-     * @param req
-     * @param res
-     */
-    static queryAllEClassName = async (req: ExpReq, res: ExpRes) => {
-        try{
-            const eClassNameList = await dataSource
-                .getRepository(EClass)
-                .createQueryBuilder('eClass')
-                .select(['eClass.eClassName'])
-                .getMany()
-
-            return res.status(StatusCode.E200).send({
-                eClassNameList: eClassNameList.map(eClassName => eClassName.eClassName)
-            })
-        }catch (e) {
-            console.log(e.message)
-            const error = new Error<{}>(e, StatusCode.E500, Message.ServerError)
-            return res.status(error.statusCode).send({
-                info: error.info,
-                message: error.message
-            })
-        }
-    }
-
-    static queryCurrentFiscalYear = (req: ExpReq, res: ExpRes) => {
-        const { currentFiscalStartTime, currentFiscalEndTime } = Utils.getCurrentFiscalTimeRange(fiscalEndDate.month, fiscalEndDate.date)
-        const startDate = moment(`${moment().year()}/9/30`, 'YYYY/MM/DD')
-        const endDate = moment(`${moment().year()}/11/01`, 'YYYY/MM/DD')
-
-        const isBufferTimePeriod = moment().isBetween(startDate, endDate)
-
-        return res.status(StatusCode.E200).send({
-            currentFiscalStartTime: isBufferTimePeriod ?  moment(currentFiscalStartTime).subtract(1, 'years').toDate() : currentFiscalStartTime,
-            currentFiscalEndTime
-        })
-    }
 }
 
 export default userController

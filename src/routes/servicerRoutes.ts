@@ -6,7 +6,7 @@ const servicerRoutes = express.Router()
 
 
 // get all user roles
-servicerRoutes.get('/', validateUser, servicerController.queryAllServicers)
+servicerRoutes.get('/', validateUser, servicerController.queryServicersList)
 
 
 

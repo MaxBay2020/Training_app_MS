@@ -33,10 +33,14 @@ export type TableHeadLabelType = {
     // for user table
     'First Name': string,
     'Last Name': string,
-    'email': string,
+    'Email': string,
     'User Role': string,
     'Created At': string,
     'Updated At': string,
+
+    // for servicer table
+    'OptOutFlag': string,
+    'TrsiiOptIn': string,
 }
 
 export type OrderByType = 'ASC' | 'DESC'
@@ -56,9 +60,10 @@ export const tableHeadLabels: TableHeadLabelType = {
     'Servicer ID': 'sm_id',
     'Servicer Name': 'sm_servicerMasterName',
 
+    // for user table
     'First Name': 'user_firstName',
     'Last Name': 'user_lastName',
-    'email': 'user_email',
+    'Email': 'user_email',
     'User Role': 'userRole_userRoleName',
     'Created At': 'user_createdAt',
     'Updated At': 'user_updatedAt',
@@ -73,18 +78,24 @@ export const tableHeadLabels: TableHeadLabelType = {
     'Appd.Webinar': 'webinar_trng_cnt',
     'Webinar Credits': 'webinar_trng_score',
     'Training Credits': 'training_credit',
+
+    // for servicer table
+    'OptOutFlag': 'sm_optOutFlag',
+    'TrsiiOptIn': 'sm_trsiiOptIn',
 }
 
 export type defaultSortingFieldNameType = {
     trainingTable: string,
     creditTable: string,
-    userTable: string
+    userTable: string,
+    servicerTable: string
 }
 
 export const defaultSortingFieldName: defaultSortingFieldNameType = {
     trainingTable: 'training_createdAt',
     creditTable: 'fiscalYear',
-    userTable: 'user_createAt'
+    userTable: 'user_createAt',
+    servicerTable: 'sm_id'
 }
 
 export type traineeType = {
