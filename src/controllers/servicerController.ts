@@ -105,6 +105,7 @@ class servicerController {
                     'sm.servicerMasterName',
                     'sm.trsiiOptIn',
                     'sm.optOutFlag',
+                    'sm.isDelete'
                 ])
 
 
@@ -290,11 +291,20 @@ class servicerController {
                     .getOne(),
             ])
 
+
             if(!currentServicer){
                 const error = new Error(null, StatusCode.E404, Message.ErrFind)
                 return res.status(error.statusCode).send({
                     info: '',
                     message: error.message
+                })
+            }
+
+            if(servicerByServicerId?.id !== currentServicer.id){
+                const error = new Error(null, StatusCode.E406, Message.HasExisted)
+                return res.status(error.statusCode).send({
+                    info: '',
+                    message: error.message,
                 })
             }
 
@@ -356,7 +366,7 @@ class servicerController {
     static deleteServicerByServicerId = async (req: ExpReq, res: ExpRes) => {
         const { email, userRole } = req.body
 
-        const { userId } = req.params
+        const { servicerId } = req.params
 
         if(userRole !== UserRoleEnum.ADMIN){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
@@ -366,7 +376,7 @@ class servicerController {
             })
         }
 
-        if(!userId){
+        if(!servicerId){
             const error = new Error(null, StatusCode.E400, Message.ErrParams)
             return res.status(error.statusCode).send({
                 info: '',
@@ -391,11 +401,11 @@ class servicerController {
 
             await dataSource
                 .createQueryBuilder()
-                .update(User)
+                .update(Servicer)
                 .set({
                     isDelete: true
                 })
-                .where('id = :userId', { userId })
+                .where('id = :servicerId', { servicerId })
                 .execute()
 
             return res.status(StatusCode.E200).send({

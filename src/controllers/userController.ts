@@ -315,13 +315,21 @@ class userController {
                 })
             }
 
-            if(userByEmail){
+            if(userByEmail?.id !== userByUserId.id){
                 const error = new Error(null, StatusCode.E406, Message.HasExisted)
                 return res.status(error.statusCode).send({
                     info: '',
                     message: error.message,
                 })
             }
+
+            // if(userByEmail){
+            //     const error = new Error(null, StatusCode.E406, Message.HasExisted)
+            //     return res.status(error.statusCode).send({
+            //         info: '',
+            //         message: error.message,
+            //     })
+            // }
 
             const userToUpdate: User = User.create({
                 firstName,
