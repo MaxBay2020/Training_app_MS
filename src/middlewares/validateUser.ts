@@ -11,7 +11,6 @@ import jwt from "jsonwebtoken"
  * @param next
  */
 export const validateUser = async (req: ExpReq, res: ExpRes, next: NextFunction) => {
-    next()
     try {
         const authHeader = req.headers.authorization
 

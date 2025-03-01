@@ -4,6 +4,7 @@ import TrainingController from './trainingControllers';
 import {Request as ExpReq, Response as ExpRes} from 'express'
 import dataSource from '../data-source'
 
+
 // mock request and response
 const mockReq = {} as ExpReq;
 const mockRes = {
