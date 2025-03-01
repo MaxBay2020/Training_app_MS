@@ -47,6 +47,14 @@ yarn install
 yarn dev
 ```
 
+### 4. Run the tests
+
+```bash
+# bash
+
+yarn test:watch
+```
+
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
