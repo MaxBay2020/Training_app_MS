@@ -18,6 +18,7 @@
 - **Framework**: Express  
 - **Database**: MySQL
 - **Package Manager**: Yarn  
+- **Test Framework**: Jest  
 
 ## Installation & Setup
 
