@@ -6,10 +6,33 @@ import cors from "cors";
 import authRouters from "./routes/authRoutes"
 import dotenv from 'dotenv'
 import creditRouters from "./routes/creditsRoutes";
-import {validateUser} from "./middlewares/validateUser";
+
+const app: Express = express()
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
+
+app.use(cors())
+dotenv.config()
+
+
+// routes
+app.use('/training', trainingRouters)
+app.use('/auth', authRouters)
+app.use('/credit', creditRouters)
+
+
+// error handler
+app.use('*', (req, res) => {
+    return res.status(404).json({
+        message: 'NO MATCHED ROUTER'
+    })
+})
 
 const startServer = async () => {
-    const app: Express = express()
 
     try {
         await AppDataSource.initialize()
@@ -17,26 +40,8 @@ const startServer = async () => {
         console.log(e.message)
     }
 
-    // parse application/x-www-form-urlencoded
-    app.use(bodyParser.urlencoded({ extended: false }))
-
-    // parse application/json
-    app.use(bodyParser.json())
-
-    app.use(cors())
-    dotenv.config()
 
 
-    app.use('/training', trainingRouters)
-    app.use('/auth', authRouters)
-    app.use('/credit', creditRouters)
-
-    // error handler
-    app.use('*', (req, res) => {
-        return res.status(404).json({
-            message: 'NO MATCHED ROUTER'
-        })
-    })
 
     const port = Number(process.env.PORT) || 8000
     app.listen(port, () => {
@@ -44,4 +49,11 @@ const startServer = async () => {
     })
 }
 
-startServer()
+// only run server when this file is running directly
+// in testing mode, it will NOT run startServer() function
+if (require.main === module) {
+    startServer()
+}
+
+
+export default app

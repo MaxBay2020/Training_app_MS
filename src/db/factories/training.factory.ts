@@ -3,9 +3,9 @@ import Training from "../../entities/Training";
 import User from "../../entities/User";
 import {TrainingTypeEnum, UserRoleEnum} from "../../enums/enums";
 
-// 使用setSeederFactory(第一个参数， 第二个参数)方法来定义工厂流水线
-// 第一个参数：指定要生产那个entity
-// 第二个参数：是一个回调函数，用来创建entity；回调函数的形参faker就可以帮助我们生成假数据
+/**
+ * insert bulk records for training table
+ */
 export default setSeederFactory(Training, async faker => {
 
     const user: User = await User.findOneBy({}) as User

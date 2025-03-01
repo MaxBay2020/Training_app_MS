@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm'
 import {UserRoleEnum} from "../../enums/enums";
 import UserRole from "../../entities/UserRole";
 
+// insert fake records
 class UserRoleSeeder implements Seeder {
     async run(dataSource: DataSource, factoryManager: SeederFactoryManager): Promise<any> {
         const repo = dataSource.getRepository(UserRole)

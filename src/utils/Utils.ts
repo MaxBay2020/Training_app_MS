@@ -7,6 +7,12 @@ import {eClassModuleCount, logoUrl} from "./consts";
 import PDFDocument = PDFKit.PDFDocument;
 
 class Utils {
+    /**
+     * query all records in a desired table
+     * @param identifiers
+     * @param tableName
+     * @param primaryKeyColumnName
+     */
      static queryAllRecordsInTable<T, Entity>(identifiers: T[], tableName: ObjectType<Entity>, primaryKeyColumnName: string) :Promise<Entity[]> {
         return Promise.all(identifiers.map(async identifier => {
             return dataSource

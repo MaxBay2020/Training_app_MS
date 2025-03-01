@@ -11,6 +11,11 @@ import {UserWithDetails} from "../utils/dataType";
 
 
 class AuthControllers {
+    /**
+     * login user with email and password
+     * @param req
+     * @param res
+     */
     static loginUser = async (req: ExpReq, res: ExpRes) => {
         const { email, password } = req.body
 
@@ -90,6 +95,7 @@ class AuthControllers {
     }
 
     /**
+     * register a user with email, password, firtsname and lastname
      * NOTICE!!! This API is temporarily used!
      * @param req
      * @param res

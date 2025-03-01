@@ -3,7 +3,6 @@ import { DataSource } from 'typeorm'
 import ServicerMaster from "../../entities/ServicerMaster";
 
 class ServicerMasterSeeder implements Seeder {
-    // 实现Seeder接口中的run()方法
     async run(dataSource: DataSource, factoryManager: SeederFactoryManager): Promise<any> {
         const repo = dataSource.getRepository(ServicerMaster)
 

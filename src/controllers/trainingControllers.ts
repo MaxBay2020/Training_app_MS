@@ -16,14 +16,16 @@ import {Trainee} from "../utils/dataType";
 
 class TrainingController {
 
+    /**
+     * query all training credits
+     * @param req
+     * @param res
+     */
     static queryAllTrainingCredits = async (req: ExpReq, res: ExpRes) => {
         const { userRole, email, servicerMasterId } = req.body
         if(userRole !== UserRoleEnum.SERVICER && userRole !== UserRoleEnum.SERVICER_COORDINATOR){
             const error = new Error(null, StatusCode.E401, Message.AuthorizationError)
-            return res.status(StatusCode.E200).send({
-                info: '',
-                message: error.message
-            })
+            return res.status(error.statusCode).send(error.message)
         }
 
         try{
@@ -680,6 +682,12 @@ class TrainingController {
         }
     }
 
+
+    /**
+     * update training status by training ID
+     * @param req
+     * @param res
+     */
     static updateTrainingStatusByIds = async (req: ExpReq, res: ExpRes) => {
         const { trainingIds, approveOrReject, userRole, email } = req.body
         if(userRole !== UserRoleEnum.APPROVER){
