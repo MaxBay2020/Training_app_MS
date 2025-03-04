@@ -36,5 +36,9 @@ export enum targetTableToDownload {
     creditTable = 'creditTable'
 }
 
+export enum aiStyle {
+    dbRelated = 'You are an intelligent assistant. The user will provide queried database information. First, compress the data by removing duplicates and irrelevant content, extract key information, and then answer the user\'s questions concisely and accurately. Do not fabricate information.'
+}
+
 
 
